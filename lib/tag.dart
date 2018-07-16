@@ -18,6 +18,7 @@ class Tag {
   bool isNegative() {
     return _rating < 0;
   }
+  int get rating => _rating;
 
   int firstLike() {
     _rating = 500;
@@ -94,13 +95,14 @@ class Deficit {
 
   List<int> give(int j) {
     if (def == 0) return null;
+    int tempDef = def;
     List<int> numToGive = new List();
-
     for (int i = def; i > def - j && i > 1; i--) {
       numToGive.add(places[i - 1]);
       places[i - 1] = 0;
-      def -= 1;
+      tempDef -= 1;
     }
+    def = tempDef;
     return numToGive;
   }
 
@@ -204,7 +206,7 @@ class TagList {
   }
 
   String getTag() {
-    Random generator = new Random();
+    Random generator = new Random.secure();
     int number = generator.nextInt(10000);
     while (list[number] == null) {
       list[number] = "popular";
@@ -213,6 +215,15 @@ class TagList {
       def.take(nullNumber);
     }
     return list[number];
+  }
+
+  double getPercent(String name, String source){
+    double percent = 0.0;
+    for(String s in list){
+      if(s==name)
+        percent += 0.01;
+    }
+    return percent;
   }
 }
 
