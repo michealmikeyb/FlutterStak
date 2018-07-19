@@ -1,29 +1,32 @@
 import 'dart:math';
+import 'package:json_annotation/json_annotation.dart';
 
+part 'tag.g.dart';
+
+@JsonSerializable()
 class Tag {
-  int _rating;
-  int _likeMultiplier;
-  int _dislikeMultiplier;
+  int rating;
+  int likeMultiplier;
+  int dislikeMultiplier;
   String name;
   String type;
   List<int> listIndexes;
 
   Tag(this.name, this.type) {
-    _rating = 0;
-    _likeMultiplier = 50;
-    _dislikeMultiplier = 50;
+    rating = 0;
+    likeMultiplier = 50;
+    dislikeMultiplier = 50;
     listIndexes = new List();
   }
 
   bool isNegative() {
-    return _rating < 0;
+    return rating < 0;
   }
-  int get rating => _rating;
 
   int firstLike() {
-    _rating = 500;
-    _likeMultiplier = 60;
-    _dislikeMultiplier = 40;
+    rating = 500;
+    likeMultiplier = 60;
+    dislikeMultiplier = 40;
     return 500;
   }
 
@@ -32,61 +35,79 @@ class Tag {
       listIndexes.add(j);
     }
     if (alreadyIn) {
-      _rating += list.length;
+      rating += list.length;
     }
   }
 
   List<int> takeNumbers(int i) {
-    int numberOfPlaces = _rating;
+    int numberOfPlaces = rating;
     List<int> removed = new List(i);
     if (i < numberOfPlaces) {
       for (int j = i; j > 0; j--) {
         removed[j - 1] = listIndexes.removeLast();
         numberOfPlaces--;
       }
-      _rating = numberOfPlaces;
+      rating = numberOfPlaces;
       return removed;
     } else {
       for (int j = numberOfPlaces; j > 0; j--) {
         removed[j - 1] = listIndexes.removeLast();
         numberOfPlaces--;
       }
-      _rating = numberOfPlaces;
+      rating = numberOfPlaces;
       return removed;
     }
   }
 
   int firstDislike() {
-    _rating = -200;
-    _dislikeMultiplier = 60;
-    _likeMultiplier = 40;
+    rating = -200;
+    dislikeMultiplier = 60;
+    likeMultiplier = 40;
     return -200;
   }
 
   int dislike() {
-    int deficit = 2 * _dislikeMultiplier;
-    if (_dislikeMultiplier < 100) {
-      _dislikeMultiplier += 10;
-      _likeMultiplier -= 10;
+    int deficit = 2 * dislikeMultiplier;
+    if (dislikeMultiplier < 100) {
+      dislikeMultiplier += 10;
+      likeMultiplier -= 10;
     }
     return deficit;
   }
 
   int like() {
-    int raise = 2 * _likeMultiplier;
-    if (_likeMultiplier < 100) {
-      _likeMultiplier += 10;
-      _dislikeMultiplier -= 10;
+    int raise = 2 * likeMultiplier;
+    if (likeMultiplier < 100) {
+      likeMultiplier += 10;
+      dislikeMultiplier -= 10;
     }
     return raise;
   }
 
   @override
   String toString() {
-    return "tag name: $name tag rating: $_rating";
+    return "tag name: $name tag rating: $rating";
   }
-}
 
+  Map<String, dynamic> toJson()=>{
+    'likemultiplier': likeMultiplier,
+    'dislikemultiplier': dislikeMultiplier,
+    'listindexes': listIndexes,
+    'rating': rating,
+    'name': name,
+    'type': type,
+  };
+
+  factory Tag.fromJson(Map<String, dynamic> json) => _$TagFromJson(json);
+    /**:_likeMultiplier = json['likemultiplier'],
+    _dislikeMultiplier = json['dislikemultiplier'],
+    listIndexes = json['listindexes'],
+    _rating = json['rating'],
+    name = json['name'],
+    type = json['type'];**/
+
+}
+@JsonSerializable()
 class Deficit {
   int def;
   List<int> places;
@@ -110,8 +131,18 @@ class Deficit {
     for (int i in j) places.add(i);
     def = places.length;
   }
-}
 
+  Map<String, dynamic> toJson()=>{
+    'def': def,
+    'places': places,
+
+  };
+
+  factory Deficit.fromJson(Map<String, dynamic> json) => _$DeficitFromJson(json);
+  /**:def = json['def'],
+  places = json['places'].cast<int>();**/
+}
+@JsonSerializable()
 class TagList {
   List<String> list;
   List<Tag> allTags;
@@ -225,40 +256,25 @@ class TagList {
     }
     return percent;
   }
-}
 
-class PlaceHolder {
-  String _place;
-  String _source;
-  String _name;
-
-  PlaceHolder(this._name, this._place, this._source);
-
-  String get place => _place;
-  String get source => _source;
-  String get name => _name;
-  set place(p) => _place = p;
-}
-
-class PlaceList {
-  List<PlaceHolder> list;
-
-  PlaceList() {
-    list = new List();
-  }
-
-  String getPlace(String tag, String source) {
-    for (PlaceHolder p in list) {
-      if (p.name == tag && p.source == source) return p.place;
+  String toString(){
+    String s;
+    for(Tag t in allTags){
+      s+=t.toString();
     }
-    list.add(new PlaceHolder(tag, "not in", source));
-    return "not in";
+    return s;
   }
 
-  void setPlace(String tag, String source, String place) {
-    for (PlaceHolder p in list) {
-      if (p.name == tag && p.source == source)
-      p.place = place;
-    }
-  }
+  Map<String, dynamic> toJson() =>{
+    'list': list,
+    'alltags': allTags,
+    'def':def,
+  };
+
+  factory TagList.fromJson(Map<String, dynamic> json)=> _$TagListFromJson(json);
+    /**:list = json['taglist'].cast<String>(),
+    allTags = json['alltags'].cast<Tag>(),
+    def = new Deficit.fromJson(json['def']);**/
 }
+
+

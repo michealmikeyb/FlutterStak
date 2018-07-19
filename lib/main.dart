@@ -4,6 +4,7 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:collection';
 import 'tag.dart';
+import 'placeList.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 void main() => runApp(new MyApp());
@@ -72,21 +73,25 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
 
   void save() async {
     var prefs = await SharedPreferences.getInstance();
-    String tagJson = encoder.convert(tagList);
+    
+    String taglistJson = encoder.convert(tagList);
     String placeJson = encoder.convert(placeList);
     prefs.setString('place', placeJson);
-    prefs.setString('tag', tagJson);
+    prefs.setString('taglist', taglistJson);
   }
 
   void restore() async {
     var prefs = await SharedPreferences.getInstance();
-    String tagJson = prefs.getString('tag') ?? "0";
+    String tagJson = prefs.getString('taglist') ?? "0";
     String placeJson = prefs.getString('place') ?? "0";
     if (tagJson == "0") {
       return;
     }
-    tagList = JSON.decode(tagJson);
-    placeList = JSON.decode(placeJson);
+    Map tagmap = JSON.decode(tagJson);
+    Map placemap = JSON.decode(placeJson);
+    tagList = new TagList.fromJson(tagmap);
+    placeList = new PlaceList.fromJson(placemap);
+    print(placeList);
   }
 
   Future<String> getData(
@@ -150,7 +155,6 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
             placeList.setPlace("popular", source, data["data"]["after"]);
           placeList.setPlace(sub, source, data["data"]["after"]);
           //print(" after tag: $sub place: ${placeList.getPlace(tag, "reddit")}");
-          print("key: $i title: $title index: $index");
           if ((index - thisIndex) == 2) {
             if (firstRender) {
               firstRender = false;
@@ -176,7 +180,6 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
                   default:
                     break;
                 }
-                print("after switch");
                 removeCard();
 
               },
