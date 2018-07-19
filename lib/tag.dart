@@ -82,6 +82,7 @@ class Tag {
       dislikeMultiplier -= 10;
     }
     return raise;
+    
   }
 
   @override
@@ -90,9 +91,9 @@ class Tag {
   }
 
   Map<String, dynamic> toJson()=>{
-    'likemultiplier': likeMultiplier,
-    'dislikemultiplier': dislikeMultiplier,
-    'listindexes': listIndexes,
+    'likeMultiplier': likeMultiplier,
+    'dislikeMultiplier': dislikeMultiplier,
+    'listIndexes': listIndexes,
     'rating': rating,
     'name': name,
     'type': type,
@@ -176,8 +177,10 @@ class TagList {
         break;
       }
     }
+     
     if (alreadyIn) {
       raise = allTags[allTagsPlace].like();
+    
     } 
     else {
       Tag t = new Tag(tag, "reddit");
@@ -185,7 +188,6 @@ class TagList {
       allTags.add(t);
       allTagsPlace = allTags.length - 1;
     }
-
     if (def.def > 0) {
       if (raise < def.def) {
         List<int> numbers = def.give(raise);
@@ -260,14 +262,14 @@ class TagList {
   String toString(){
     String s;
     for(Tag t in allTags){
-      s+=t.toString();
+      s+=(t.toString()+"\n");
     }
     return s;
   }
 
   Map<String, dynamic> toJson() =>{
     'list': list,
-    'alltags': allTags,
+    'allTags': allTags,
     'def':def,
   };
 

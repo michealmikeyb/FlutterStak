@@ -42,9 +42,11 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
   PlaceList placeList;
   int index;
   JsonEncoder encoder;
+  JsonDecoder decoder;
 
   void initState() {
     encoder = new JsonEncoder();
+    decoder = new JsonDecoder();
     index = 0;
     super.initState();
     tagList = new TagList();
@@ -87,8 +89,8 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
     if (tagJson == "0") {
       return;
     }
-    Map tagmap = JSON.decode(tagJson);
-    Map placemap = JSON.decode(placeJson);
+    Map tagmap = decoder.convert(tagJson);
+    Map placemap = decoder.convert(placeJson);
     tagList = new TagList.fromJson(tagmap);
     placeList = new PlaceList.fromJson(placemap);
     print(placeList);
@@ -129,12 +131,13 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
 
     
                 save();
+                
     String tag = tagList.getTag();
     String place = placeList.getPlace(tag, "reddit");
     card3 = card2;
     card2 = card1;
     card1 = newCard(tag, "reddit", place, (tag == "popular"));
-
+    
     setState(() {});
   }
 
@@ -168,6 +171,7 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
             child: new Dismissible(
               key: Key("$index"),
               onDismissed: (direction) {
+                
                 switch (direction) {
                   case DismissDirection.startToEnd:
                     tagList.like(sub);
