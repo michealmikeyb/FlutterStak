@@ -349,6 +349,18 @@ class TagList {
     }
     return list[number];
   }
+
+  void removeTag(String tag){
+    List<int> removed = new List();
+    for(int i = 0; i<10000;i++){
+      if(list[i] == tag){
+        list[i] = "popular";
+        removed.add(i);
+        
+      }
+    }
+    def.take(removed);
+  }
   /**
    * gets the percent a certain tag posses in the list
    * @param name the name of the tag

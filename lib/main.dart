@@ -67,6 +67,54 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
     });
   }
   /**
+   * method used in adding a tag to the list
+   */
+  void addTag(String answer){
+    setState(() {
+          tagList.like(answer);
+        });
+  }
+  /**
+   * creates the add tag dialog created when the button
+   * in the upper right corner is pressed, will add the tag
+   * to the taglist by liking it once.
+   */
+  Future<Null> addTagDialog() async{
+    addTag(
+      await showDialog(
+        context: context,
+        child: new SimpleDialog(
+          title: new Text("Add a tag"),
+          children: <Widget>[
+            new TextField(
+              onSubmitted:(text) {Navigator.pop(context, text);},
+            )
+          ],
+        )
+      )
+    );
+  }
+  /**
+   * creates the add tag dialog created when the button
+   * in the upper right corner is pressed, will add the tag
+   * to the taglist by liking it once.
+   */
+  Future<Null> removeTagDialog() async{
+    tagList.removeTag(
+      await showDialog(
+        context: context,
+        child: new SimpleDialog(
+          title: new Text("Remove a tag"),
+          children: <Widget>[
+            new TextField(
+              onSubmitted:(text) {Navigator.pop(context, text);},
+            )
+          ],
+        )
+      )
+    );
+  }
+  /**
    * save the current taglist and placelist
    * in the sharedpreferences as a json
    */
@@ -79,6 +127,7 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
     prefs.setString('place', placeJson);
     prefs.setString('taglist', taglistJson);
   }
+  
   /**
    * restore the taglist and placelist from shared preferences 
    */
@@ -155,6 +204,8 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
         future: getData(tag, place, source),//gets the json data from the getdata function
         builder: (BuildContext context, AsyncSnapshot snapshot) {
           var data = JSON.decode(snapshot.data);//format the data into a map
+          var listing = data["data"]["children"];
+          if(listing.length>0){
           //get all the data from the map and assign it to variables
           String title = data["data"]["children"][0]["data"]["title"];
           String url = data["data"]["children"][0]["data"]["url"];
@@ -172,9 +223,11 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
             } else
               firstRender = true;
           }
+          if((index - thisIndex)==1 && firstRender){
+            print(title);
+          }
           return new Container(//the card widget
-            height: 500.0,//the size of the card
-            width: 350.0,
+            padding: EdgeInsets.all(20.0),
             child: new Dismissible(//it is a dismissible which allows for easily handling the animation
               key: Key("$index"),
               onDismissed: (direction) {
@@ -196,8 +249,7 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
               },
               child: Card(//the card
                 elevation: 50.0,
-                child: new Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
+                child: new ListView(
                   children: <Widget>[
                     new Text(
                       "Posted on: $sub \n By: $author",//where it came from
@@ -214,6 +266,9 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
               ),
             ),
           );
+          }
+          else
+            return newCard();
         });
   }
 
@@ -223,6 +278,16 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
     return new Scaffold(
       appBar: new AppBar(
         title: new Text(widget.title),
+        actions: <Widget>[
+          IconButton(
+            icon: new Icon(Icons.add),
+            onPressed: (){addTagDialog();},
+          ),
+          IconButton(
+            icon: new Icon(Icons.block),
+            onPressed: (){removeTagDialog();},
+          )
+        ],
       ),
       body: new Center(
         child: new GestureDetector(
