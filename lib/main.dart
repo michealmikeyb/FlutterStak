@@ -64,7 +64,7 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
     decoder = new JsonDecoder();
     names = new List();
     userNames = new List();
-    //getNames();
+    getNames();
     index = 0; //start the index
     super.initState();
     tagList = new TagList(); //initialize the lists
@@ -82,11 +82,15 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
         await SharedPreferences.getInstance(); //get the shared preferences
     String nameJson = prefs.getString('names') ?? "0";
     if (nameJson == "0") return;
-    Map nameMap = decoder.convert(nameJson);
-    List<UserName> usernames = (nameMap as List)
-        .map((e) => new UserName.fromJson(e as Map<String, dynamic>));
-    userNames = usernames;
-    names = usernames.map((e) => e.name);
+    List nameMap = decoder.convert(nameJson);
+    print(nameMap[0]);
+    for(Map m in nameMap){
+      userNames.add(UserName.fromJson(m));
+    }
+    //userNames = usernames;
+    for(UserName u in userNames){
+      names.add(u.name);
+    }
     currentUser = names[0];
     setState(() {});
   }
@@ -186,7 +190,7 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
   }
 
   Future<Null> createAccountDialog() async {
-    
+    String buttonText = "submit";
     String name = "";
     await showDialog(
         context: context,
@@ -202,10 +206,12 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
               },
             ),
             FlatButton(
-              child:Text("Submit"),
+              child:Text(buttonText),
               onPressed: (){
               if(checked)
               Navigator.pop(context);
+              else
+              buttonText = "Name Taken";
             },)
             /**FutureBuilder(
               future: isTaken,
@@ -363,7 +369,7 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
         future: getData(
             name, place, source), //gets the json data from the getdata function
         builder: (BuildContext context, AsyncSnapshot snapshot) {
-          var data = JSON.decode(snapshot.data); //format the data into a map
+          var data = decoder.convert(snapshot.data); //format the data into a map
           String dataSource;
           String title;
           String url;
