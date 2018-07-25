@@ -164,6 +164,21 @@ class Tag {
   factory Tag.fromJson(Map<String, dynamic> json) => _$TagFromJson(json);
 }
 
+@JsonSerializable()
+class SourceName {
+  String source;
+  String name;
+
+  SourceName(this.name, this.source);
+
+  Map<String, dynamic> toJson()=>{
+    'source': source,
+    'name': name,
+  };
+
+  factory SourceName.fromJson(Map<String, dynamic> json) => _$SourceNameFromJson(json);
+}
+
 /**
  * holds the available indexes in the taglist
  * that can be reassigned
@@ -222,7 +237,7 @@ class Deficit {
 
 @JsonSerializable()
 class TagList {
-  List<String> list; //the list of names that will be randomly selected from
+  List<SourceName> list; //the list of names that will be randomly selected from
   List<Tag> allTags; //all of the tags in the list with their ratings
   Deficit def; //the def where the available indeces will be stored
 /**
@@ -233,10 +248,11 @@ class TagList {
     allTags = new List(); //initialize the lists
     list = new List(10000);
     Tag popular = new Tag("popular", "reddit"); //create a new popular tag
+    SourceName popularsn = new SourceName("popular", "reddit");
 
     for (int i = 0; i < 10000; i++) {
       //fill the list with popular
-      list[i] = "popular";
+      list[i] = popularsn;
     }
     allTags.add(popular); //add it to alltags
     List<int> defList =
@@ -251,14 +267,14 @@ class TagList {
    * in the list to add more instances of the given name
    * @param tag the tag that is being liked
    */
-  void like(String tag) {
+  void like(String tag, String source) {
     if (tag == null) return;
     int raise = 0; //initialize the raise
     int allTagsPlace = -1; //the place in alltags where the tag is if its there
     bool alreadyIn = false; //whether the tag is already in the list
     for (Tag t in allTags) {
       //go through alltags to see if its already in the list
-      if (t.name == tag) {
+      if (t.name == tag && t.type == source) {
         //if it is already in set alltagsplace and alreadyin
         allTagsPlace = allTags.indexOf(t);
         alreadyIn = true;
@@ -277,19 +293,20 @@ class TagList {
       allTagsPlace = allTags.length - 1;
     }
     //if numbers are available to add
+    SourceName theTag = new SourceName(tag, source);
     if (def.def > 0) {
       if (raise < def.def) {//if it can give the amount given by raise, have the deficit give the numbers then add them to the tag
         List<int> numbers = def.give(raise);
         allTags[allTagsPlace].addNumbers(numbers, alreadyIn);
         for (int i in numbers) {
-          list[i] = tag;
+          list[i] = theTag;
         }
       } else {//otherwise just add all the deficit
         int newRaise = def.def;
         List<int> numbers = def.give(newRaise);
         allTags[allTagsPlace].addNumbers(numbers, alreadyIn);
         for (int i in numbers) {
-          list[i] = tag;
+          list[i] = theTag;
         }
       }
     }
@@ -301,12 +318,12 @@ class TagList {
    * other tags
    * @param tag the name of the tag that is being disliked
    */
-  void dislike(String tag) {
+  void dislike(String tag, String source) {
     if (tag == null) return;
     int allTagsPlace = -1;//the index of the tag within alltags
     bool alreadyIn = false;//whether the tag is already in the alltags list
     for (Tag t in allTags) {//go through the alltags list to check if the tag is already in
-      if (t.name == tag) {//if it is set the alltagsplace and alreadyin
+      if (t.name == tag&& t.type == source) {//if it is set the alltagsplace and alreadyin
         allTagsPlace = allTags.indexOf(t);
         alreadyIn = true;
         break;
@@ -338,28 +355,38 @@ class TagList {
    * randomly selects a tag from the list, makes sure
    * it is not null then returns it
    */
-  String getTag() {
+  SourceName getTag() {
     Random generator = new Random.secure();
     int number = generator.nextInt(10000);
     while (list[number] == null) {//check if its null then replace that null with a popular
-      list[number] = "popular";
+      list[number] = new SourceName("popular", "reddit");
       number = number = generator.nextInt(10000);
       List<int> nullNumber = [number];
       def.take(nullNumber);
     }
     return list[number];
   }
-
-  void removeTag(String tag){
+  /**
+   * removes a given tag from the list as well
+   * ass the all tags list
+   * @param tag the name of the tag to be removed
+   */
+  void removeTag(String name, String source){
     List<int> removed = new List();
+    SourceName tag = new SourceName(name, source);
     for(int i = 0; i<10000;i++){
       if(list[i] == tag){
-        list[i] = "popular";
+        list[i] = new SourceName("popular", "reddit");
         removed.add(i);
         
       }
     }
+  
     def.take(removed);
+    for(Tag t in allTags){
+      if(t.name == tag)
+        allTags.remove(t);
+    }
   }
   /**
    * gets the percent a certain tag posses in the list
@@ -368,8 +395,8 @@ class TagList {
    */
   double getPercent(String name, String source) {
     double percent = 0.0;
-    for (String s in list) {
-      if (s == name) percent += 0.01;
+    for (SourceName s in list) {
+      if (s.name == name && s.source == source) percent += 0.01;
     }
     return percent;
   }
