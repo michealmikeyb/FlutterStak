@@ -14,18 +14,22 @@ class PostingPage extends StatefulWidget{
 
 class _PostingPageState extends State<PostingPage>{
   JsonDecoder decoder;
-  final String stakServerUrl = "127.0.0.1/stakSwipe/postListing.php";
+  String title;
+    String link;
+    String tag;
+  final String stakServerUrl = "http://10.0.0.169/stakSwipe/postListing.php";
 
   void initState(){
     
   }
 
-  
+  void Post()async{
+    var response = await http.post(stakServerUrl, body: {"tag": tag, "link": link, "title": title, "author": widget.username });
+    print(response.body);
+  }
  
   Widget build(BuildContext context){
-    String title;
-    String link;
-    String tag;
+    
     return new Scaffold(
       appBar: AppBar(
         title: Text("Post to StakSwipe"),
@@ -36,14 +40,14 @@ class _PostingPageState extends State<PostingPage>{
             "Title"
           ),
           new TextField(
-            onSubmitted: (text){
+            onChanged: (text){
               setState(() {title = text;});},
           ),
           Text(
             "Link"
           ),
           new TextField(
-            onSubmitted: (text){
+            onChanged: (text){
             setState(() {link = text;});
             },
           ),
@@ -51,13 +55,16 @@ class _PostingPageState extends State<PostingPage>{
             "Tag"
           ),
           new TextField(
-            onSubmitted: (text){
+            onChanged: (text){
             setState(() {tag = text;});
             },
           ),
           FlatButton(
             child: Text("Submit"),
-            onPressed:(){http.post(stakServerUrl, body: {"tag": tag, "link": link, "title": title, "author": widget.username });} ,
+            onPressed:(){
+              print("tag: $tag link: $link title: $title name ${widget.username}");
+              Post();
+              Navigator.pop(context);} ,
           )
         ],
       ),

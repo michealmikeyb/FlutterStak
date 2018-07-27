@@ -482,7 +482,7 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
             onPressed: () {
               Navigator.push(
                 context,
-                MaterialPageRoute(builder: (context) => PostingPage()),
+                MaterialPageRoute(builder: (context) => PostingPage(username: currentUser,)),
               );
             },
             icon: new Icon(Icons.library_add),
