@@ -15,6 +15,7 @@ import 'placeList.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'postingPage.dart';
 import 'name.dart';
+import 'userPostsPage.dart';
 
 void main() => runApp(new MyApp());
 
@@ -41,7 +42,7 @@ class MyHomePage extends StatefulWidget {
   _MyHomePageState createState() => new _MyHomePageState();
 }
 
-class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
+class _MyHomePageState extends State<MyHomePage> {
   List<Widget> cardList; //the list of cards
   Widget card1; //the cards in the list
   Widget card2;
@@ -84,11 +85,11 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
     if (nameJson == "0") return;
     List nameMap = decoder.convert(nameJson);
     print(nameMap[0]);
-    for(Map m in nameMap){
+    for (Map m in nameMap) {
       userNames.add(UserName.fromJson(m));
     }
     //userNames = usernames;
-    for(UserName u in userNames){
+    for (UserName u in userNames) {
       names.add(u.name);
     }
     currentUser = names[0];
@@ -206,13 +207,14 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
               },
             ),
             FlatButton(
-              child:Text(buttonText),
-              onPressed: (){
-              if(checked)
-              Navigator.pop(context);
-              else
-              buttonText = "Name Taken";
-            },)
+              child: Text(buttonText),
+              onPressed: () {
+                if (checked)
+                  Navigator.pop(context);
+                else
+                  buttonText = "Name Taken";
+              },
+            )
             /**FutureBuilder(
               future: isTaken,
               builder: (BuildContext context, AsyncSnapshot snapshot) {
@@ -369,7 +371,8 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
         future: getData(
             name, place, source), //gets the json data from the getdata function
         builder: (BuildContext context, AsyncSnapshot snapshot) {
-          var data = decoder.convert(snapshot.data); //format the data into a map
+          var data =
+              decoder.convert(snapshot.data); //format the data into a map
           String dataSource;
           String title;
           String url;
@@ -424,10 +427,14 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
                   //checks which direction it went, if left it dislikes, if right it likes
                   case DismissDirection.startToEnd:
                     tagList.like(sub, dataSource);
-                    print("right");
+                    if (source == "stakswipe")
+                      http.post("http://$stakServerUrl/stakSwipe/like.php",
+                          body: {'id': data["id"]});
                     break;
                   case DismissDirection.endToStart:
-                    print("left");
+                    if (source == "stakswipe")
+                      http.post("http://$stakServerUrl/stakSwipe/dislike.php",
+                          body: {'id': data["id"]});
                     tagList.dislike(sub, dataSource);
                     break;
                   default:
@@ -482,7 +489,7 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
             onPressed: () {
               Navigator.push(
                 context,
-                MaterialPageRoute(builder: (context) => PostingPage(username: currentUser,)),
+                MaterialPageRoute(builder: (context) => PostingPage()),
               );
             },
             icon: new Icon(Icons.library_add),
@@ -499,6 +506,11 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
             new ListTile(
               title: Text("My Posts"),
               trailing: Icon(Icons.library_add),
+              onTap: () {
+                Navigator.pop(context);
+                Navigator.push(context,
+                    MaterialPageRoute(builder: (context) => PostsPage(username: currentUser,)));
+              },
             ),
             new ListTile(
               title: Text("My Shares"),
