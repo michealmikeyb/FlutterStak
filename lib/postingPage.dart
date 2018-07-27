@@ -17,7 +17,7 @@ class _PostingPageState extends State<PostingPage>{
   String title;
     String link;
     String tag;
-  final String stakServerUrl = "http://10.0.0.169/stakSwipe/postListing.php";
+  final String stakServerUrl = "http://68.42.250.122/stakSwipe/postListing.php";
 
   void initState(){
     

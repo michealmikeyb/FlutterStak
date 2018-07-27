@@ -54,7 +54,7 @@ class _MyHomePageState extends State<MyHomePage> {
   JsonEncoder encoder; //json encoder used for saving the taglist and placelist
   JsonDecoder
       decoder; // json decoder used in restoring the taglist and placelist
-  final String stakServerUrl = "10.0.0.169";
+  final String stakServerUrl = "68.42.250.122";
   List<String> names;
   List<UserName> userNames;
   String currentUser = "none";
@@ -326,12 +326,12 @@ class _MyHomePageState extends State<MyHomePage> {
       if (place == "not in") {
         response = await http.get(
             Uri.encodeFull(
-                "$stakServerUrl/stakSwipe/getListing.php?tag=$tag&place=0;"),
+                "http://$stakServerUrl/stakSwipe/getListing.php?tag=$tag&place=0;"),
             headers: {"Accept": "applications/json"});
       } else {
         response = await http.get(
             Uri.encodeFull(
-                "$stakServerUrl/stakSwipe/getListing.php?tag=$tag&place=$place;"),
+                "http://$stakServerUrl/stakSwipe/getListing.php?tag=$tag&place=$place;"),
             headers: {"Accept": "applications/json"});
       }
       return response.body;

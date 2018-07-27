@@ -13,7 +13,7 @@ class PostsPage extends StatefulWidget {
 }
 
 class _PostsPageState extends State<PostsPage> {
-  final String stakServerUrl = "10.0.0.169";
+  final String stakServerUrl = "68.42.250.122";
   String name;
   JsonDecoder decoder;
   void initState() {
