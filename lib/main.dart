@@ -41,7 +41,7 @@ class MyHomePage extends StatefulWidget {
   @override
   _MyHomePageState createState() => new _MyHomePageState();
 }
-
+enum contentSource {reddit, stakswipe}
 class _MyHomePageState extends State<MyHomePage> {
   List<Widget> cardList; //the list of cards
   Widget card1; //the cards in the list
@@ -59,6 +59,7 @@ class _MyHomePageState extends State<MyHomePage> {
   List<UserName> userNames;
   String currentUser = "none";
   bool checked = false;
+  
 
   void initState() {
     encoder = new JsonEncoder(); //initialize the encoder and decoder
@@ -84,7 +85,6 @@ class _MyHomePageState extends State<MyHomePage> {
     String nameJson = prefs.getString('names') ?? "0";
     if (nameJson == "0") return;
     List nameMap = decoder.convert(nameJson);
-    print(nameMap[0]);
     for (Map m in nameMap) {
       userNames.add(UserName.fromJson(m));
     }
@@ -100,9 +100,10 @@ class _MyHomePageState extends State<MyHomePage> {
    * method used in adding a tag to the list
    */
   void addTag(SourceName answer) {
+    if(answer.name=="cancel")
+    return;
     setState(() {
       tagList.like(answer.name, answer.source);
-      print(answer.source);
     });
   }
 
@@ -112,37 +113,54 @@ class _MyHomePageState extends State<MyHomePage> {
    * to the taglist by liking it once.
    */
   Future<Null> addTagDialog() async {
-    String source = "";
+    contentSource source = contentSource.reddit;
+    String tag;
     addTag(await showDialog(
         context: context,
         child: new SimpleDialog(
           title: new Text("Add a tag"),
           children: <Widget>[
             new TextField(
-              onSubmitted: (text) {
-                Navigator.pop(context, new SourceName(text, source));
+              onChanged: (text) {
+               setState(() { tag= text;});
               },
             ),
-            new RadioListTile(
+            new RadioListTile<contentSource>(
               title: const Text("Reddit"),
-              value: "reddit",
+              value: contentSource.reddit,
               groupValue: source,
-              onChanged: (String value) {
-                setState(() {
-                  source = value;
-                });
+              onChanged: (contentSource value) {
+                setState(() {source = value;});
               },
             ),
-            new RadioListTile(
+            new RadioListTile<contentSource>(
               title: const Text("StakSwipe"),
-              value: "stakswipe",
+              value: contentSource.stakswipe,
               groupValue: source,
-              onChanged: (String value) {
-                setState(() {
-                  source = value;
-                });
+              onChanged: (contentSource value) {
+                setState(() {source = value;});
               },
-            )
+            ),
+            FlatButton(
+              child: Text("Add $tag"),
+              onPressed: (){
+                String stringSource;
+                switch(source){
+                  case contentSource.reddit:
+                  stringSource = "reddit";
+                  break;
+                  case contentSource.stakswipe:
+                  stringSource = "stakswipe";
+                  break;
+
+                } 
+                Navigator.pop(context, new SourceName(tag, stringSource));},
+            ),
+            FlatButton(
+              child: Text("Cancel"),
+              onPressed: (){
+              Navigator.pop(context, new SourceName("cancel", "cancel"));
+              },)
           ],
         )));
   }
@@ -236,7 +254,6 @@ class _MyHomePageState extends State<MyHomePage> {
   Future<bool> checkName(String name) async {
     var response = await http
         .get("http://$stakServerUrl/stakSwipe/checkName.php?name=$name");
-    print(name);
     return response.body == "available";
   }
 
@@ -246,11 +263,9 @@ class _MyHomePageState extends State<MyHomePage> {
       UserName newUser = new UserName(name);
       names.add(name);
       userNames.add(newUser);
-      print(name);
       var response = await http.post(
           "http://$stakServerUrl/stakSwipe/newUser.php",
           body: {'name': name, 'number': "${newUser.id}"});
-      print(response.body);
       currentUser = name;
       var prefs =
           await SharedPreferences.getInstance(); //get the shared preferences
@@ -357,6 +372,7 @@ class _MyHomePageState extends State<MyHomePage> {
   Widget newCard() {
     //get the tag and source from the taglist then gets the place from the place list
     SourceName tag = tagList.getTag();
+    print("tag: ${tag.name}");
     bool isPopular = (tag.name == "popular");
     String source = tag.source;
     String name = tag.name;
@@ -412,9 +428,6 @@ class _MyHomePageState extends State<MyHomePage> {
                   ""); //return a blank text so that nothing shows up instead of the card
             } else
               firstRender = true;
-          }
-          if ((index - thisIndex) == 1 && firstRender) {
-            print(title);
           }
           return new Container(
             //the card widget
@@ -489,7 +502,7 @@ class _MyHomePageState extends State<MyHomePage> {
             onPressed: () {
               Navigator.push(
                 context,
-                MaterialPageRoute(builder: (context) => PostingPage()),
+                MaterialPageRoute(builder: (context) => PostingPage(username: currentUser,)),
               );
             },
             icon: new Icon(Icons.library_add),

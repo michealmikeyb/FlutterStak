@@ -240,6 +240,7 @@ class TagList {
   List<SourceName> list; //the list of names that will be randomly selected from
   List<Tag> allTags; //all of the tags in the list with their ratings
   Deficit def; //the def where the available indeces will be stored
+  SourceName lastTag;
 /**
  * creates a new taglist filled with the reddit popular tag
  * and assigning 80% of them as available
@@ -360,10 +361,12 @@ class TagList {
     int number = generator.nextInt(10000);
     while (list[number] == null) {//check if its null then replace that null with a popular
       list[number] = new SourceName("popular", "reddit");
-      number = number = generator.nextInt(10000);
+      number = generator.nextInt(10000);
       List<int> nullNumber = [number];
       def.take(nullNumber);
     }
+    while(lastTag!=null && lastTag==list[number])
+     number = generator.nextInt(10000);
     return list[number];
   }
   /**

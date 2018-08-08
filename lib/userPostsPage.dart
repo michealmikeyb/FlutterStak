@@ -48,7 +48,7 @@ class _PostsPageState extends State<PostsPage> {
                       Text("Posted on: ${data[index]["tag"]}"),
                       Text("Score: ${data[index]["score"]}"),
                       Text(data[index]["title"], style: new TextStyle(fontSize: 25.0, color: Colors.black),),
-                      Image.network("https://i.redd.it/x1l4g1t1xa911.jpg"),
+                      Image.network(data[index]["link"]),
                     ],
                   ),
                 );
