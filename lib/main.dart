@@ -16,6 +16,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'postingPage.dart';
 import 'name.dart';
 import 'userPostsPage.dart';
+import 'comments.dart';
 
 void main() => runApp(new MyApp());
 
@@ -71,7 +72,7 @@ class _MyHomePageState extends State<MyHomePage> {
     super.initState();
     tagList = new TagList(); //initialize the lists
     placeList = new PlaceList();
-    //restore(); //restore the lists if they are in the phones memory
+    restore(); //restore the lists if they are in the phones memory
     //create three new cards
     card1 = newCard();
     card2 = newCard();
@@ -309,6 +310,8 @@ class _MyHomePageState extends State<MyHomePage> {
     placeList = new PlaceList.fromJson(placemap);
   }
 
+  
+
   /**
    * gets the json information for a tag based on its place, source and the name 
    * of the tag
@@ -395,6 +398,7 @@ class _MyHomePageState extends State<MyHomePage> {
           String sub;
           String author;
           String dataPlace;
+          String comments;
           if (data["data"] != null) {
             dataSource = "reddit";
             var listing = data["data"]["children"];
@@ -405,6 +409,7 @@ class _MyHomePageState extends State<MyHomePage> {
               sub = data["data"]["children"][0]["data"]["subreddit"];
               author = data["data"]["children"][0]["data"]["author"];
               dataPlace = data["data"]["after"];
+              comments = data["data"]["children"][0]["data"]["permalink"];
             } else
               return newCard();
           } else {
@@ -471,6 +476,7 @@ class _MyHomePageState extends State<MyHomePage> {
                       style: new TextStyle(fontSize: 25.0, color: Colors.black),
                     ),
                     new Image.network(url), //the corresponding picture
+                    new Comment(url: "https://www.reddit.com$comments.json",)
                   ],
                 ),
               ),
