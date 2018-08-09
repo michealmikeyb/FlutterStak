@@ -17,6 +17,7 @@ import 'postingPage.dart';
 import 'name.dart';
 import 'userPostsPage.dart';
 import 'comments.dart';
+import 'tagListPage.dart';
 
 void main() => runApp(new MyApp());
 
@@ -42,12 +43,12 @@ class MyHomePage extends StatefulWidget {
   @override
   _MyHomePageState createState() => new _MyHomePageState();
 }
-enum contentSource {reddit, stakswipe}
+
+enum contentSource { reddit, stakswipe }
+
 class _MyHomePageState extends State<MyHomePage> {
   List<Widget> cardList; //the list of cards
-  Widget card1; //the cards in the list
-  Widget card2;
-  Widget card3;
+  Queue<Widget> cardq;
   TagList tagList; //the taglist holding the users likes and interest
   PlaceList
       placeList; //holds the place in each tag so the user can continually go through
@@ -60,40 +61,43 @@ class _MyHomePageState extends State<MyHomePage> {
   List<UserName> userNames;
   String currentUser = "none";
   bool checked = false;
-  
 
   void initState() {
     encoder = new JsonEncoder(); //initialize the encoder and decoder
     decoder = new JsonDecoder();
-    names = new List();
+    names = new List(); //the usernames of the current user
     userNames = new List();
-    getNames();
+    getNames(); //gets the names of the user from memory
     index = 0; //start the index
     super.initState();
     tagList = new TagList(); //initialize the lists
     placeList = new PlaceList();
     restore(); //restore the lists if they are in the phones memory
     //create three new cards
-    card1 = newCard();
-    card2 = newCard();
-    card3 = newCard();
+    
     setState(() {});
   }
 
+  /**
+   * gets the usernames of the user from the phones
+   * sharedpreferences or apple equivalent
+   */
   void getNames() async {
     var prefs =
         await SharedPreferences.getInstance(); //get the shared preferences
     String nameJson = prefs.getString('names') ?? "0";
-    if (nameJson == "0") return;
-    List nameMap = decoder.convert(nameJson);
+    if (nameJson == "0") return; //if there is no name list just return back
+    List nameMap = decoder.convert(nameJson); //convert it to a map
     for (Map m in nameMap) {
+      //add all of the usernames to the list
       userNames.add(UserName.fromJson(m));
     }
     //userNames = usernames;
     for (UserName u in userNames) {
+      //add the string version to the names list
       names.add(u.name);
     }
-    currentUser = names[0];
+    currentUser = names[0]; //set the current user
     setState(() {});
   }
 
@@ -101,8 +105,7 @@ class _MyHomePageState extends State<MyHomePage> {
    * method used in adding a tag to the list
    */
   void addTag(SourceName answer) {
-    if(answer.name=="cancel")
-    return;
+    if (answer.name == "cancel") return;
     setState(() {
       tagList.like(answer.name, answer.source);
     });
@@ -114,24 +117,31 @@ class _MyHomePageState extends State<MyHomePage> {
    * to the taglist by liking it once.
    */
   Future<Null> addTagDialog() async {
-    contentSource source = contentSource.reddit;
-    String tag;
+    contentSource source = contentSource.reddit; //the enum to store the source
+    String tag; //the tag that will be added
     addTag(await showDialog(
         context: context,
         child: new SimpleDialog(
+          //inflate a dialog
           title: new Text("Add a tag"),
           children: <Widget>[
             new TextField(
               onChanged: (text) {
-               setState(() { tag= text;});
+                //update the tag when the text is changed
+                setState(() {
+                  tag = text;
+                });
               },
             ),
             new RadioListTile<contentSource>(
+              //radio tiles to decide what source its from
               title: const Text("Reddit"),
               value: contentSource.reddit,
               groupValue: source,
               onChanged: (contentSource value) {
-                setState(() {source = value;});
+                setState(() {
+                  source = value;
+                });
               },
             ),
             new RadioListTile<contentSource>(
@@ -139,29 +149,36 @@ class _MyHomePageState extends State<MyHomePage> {
               value: contentSource.stakswipe,
               groupValue: source,
               onChanged: (contentSource value) {
-                setState(() {source = value;});
+                setState(() {
+                  source = value;
+                });
               },
             ),
             FlatButton(
+              //submit button
               child: Text("Add $tag"),
-              onPressed: (){
+              onPressed: () {
                 String stringSource;
-                switch(source){
+                switch (source) {
                   case contentSource.reddit:
-                  stringSource = "reddit";
-                  break;
+                    stringSource = "reddit";
+                    break;
                   case contentSource.stakswipe:
-                  stringSource = "stakswipe";
-                  break;
-
-                } 
-                Navigator.pop(context, new SourceName(tag, stringSource));},
+                    stringSource = "stakswipe";
+                    break;
+                }
+                Navigator.pop(context, new SourceName(tag, stringSource));
+              }, //after submitted pops it with a new sourcename
             ),
             FlatButton(
               child: Text("Cancel"),
-              onPressed: (){
-              Navigator.pop(context, new SourceName("cancel", "cancel"));
-              },)
+              onPressed: () {
+                Navigator.pop(
+                    context,
+                    new SourceName("cancel",
+                        "cancel")); //sets the sourcename to cancel so the addTag method can just return
+              },
+            )
           ],
         )));
   }
@@ -172,43 +189,76 @@ class _MyHomePageState extends State<MyHomePage> {
    * from the taglist.
    */
   Future<Null> removeTagDialog() async {
-    String source = "";
+    contentSource source = contentSource.reddit; //the enum to store the source
+    String tag = "";
     tagList.removeTag(
-        await showDialog(
-            context: context,
-            child: new SimpleDialog(
-              title: new Text("Remove a tag"),
-              children: <Widget>[
-                new TextField(
-                  onSubmitted: (text) {
-                    Navigator.pop(context, text);
-                  },
-                ),
-                new RadioListTile(
-                  title: const Text("Reddit"),
-                  value: "reddit",
-                  groupValue: source,
-                  onChanged: (String value) {
-                    setState(() {
-                      source = value;
-                    });
-                  },
-                ),
-                new RadioListTile(
-                  title: const Text("StakSwipe"),
-                  value: "stakswipe",
-                  groupValue: source,
-                  onChanged: (String value) {
-                    setState(() {
-                      source = value;
-                    });
-                  },
-                )
-              ],
-            )),
-        source);
+      await showDialog(
+          context: context,
+          child: new SimpleDialog(
+            title: new Text("Remove a tag"),
+            children: <Widget>[
+              new TextField(
+                onChanged: (text) {
+                  //update the tag when the text is changed
+                  setState(() {
+                    tag = text;
+                  });
+                },
+              ),
+              new RadioListTile(
+                title: const Text("Reddit"),
+                value: contentSource.reddit,
+                groupValue: source,
+                onChanged: (contentSource value) {
+                  setState(() {
+                    source = value;
+                  });
+                },
+              ),
+              new RadioListTile(
+                title: const Text("StakSwipe"),
+                value: contentSource.stakswipe,
+                groupValue: source,
+                onChanged: (contentSource value) {
+                  setState(() {
+                    source = value;
+                  });
+                },
+              ),
+              FlatButton(
+                //submit button
+                child: Text("Add $tag"),
+                onPressed: () {
+                  String stringSource;
+                  switch (source) {
+                    case contentSource.reddit:
+                      stringSource = "reddit";
+                      break;
+                    case contentSource.stakswipe:
+                      stringSource = "stakswipe";
+                      break;
+                  }
+                  Navigator.pop(context, new SourceName(tag, stringSource));
+                }, //after submitted pops it with a new sourcename
+              ),
+              FlatButton(
+                child: Text("Cancel"),
+                onPressed: () {
+                  Navigator.pop(
+                      context,
+                      new SourceName("cancel",
+                          "cancel")); //sets the sourcename to cancel so the addTag method can just return
+                },
+              )
+            ],
+          )),
+    );
   }
 
+  /**
+   * dialog for the user to create a name so that they 
+   * can post and share content
+   */
   Future<Null> createAccountDialog() async {
     String buttonText = "submit";
     String name = "";
@@ -217,61 +267,68 @@ class _MyHomePageState extends State<MyHomePage> {
         child: SimpleDialog(
           title: Text("Create Account"),
           children: <Widget>[
-            Text("Desired Name"),
+            Text("Desired Name (press enter to check availability)"),
             TextField(
               onSubmitted: (text) {
                 setState(() {
-                  addName(text);
+                  addName(
+                      text); //check the name to see if it is available, add it if it is
                 });
               },
             ),
             FlatButton(
               child: Text(buttonText),
               onPressed: () {
-                if (checked)
+                if (checked) //if its checked and added, exit
                   Navigator.pop(context);
                 else
                   buttonText = "Name Taken";
               },
-            )
-            /**FutureBuilder(
-              future: isTaken,
-              builder: (BuildContext context, AsyncSnapshot snapshot) {
-                if (snapshot.data) {
-                  return FlatButton(
-                      child: Text("Submit"),
-                      onPressed: () {
-                        //addName(name);
-                        Navigator.pop(context, name);
-                      });
-                } else
-                  return new Text("Name Taken");
+            ),
+            FlatButton(
+              //cancel out if user wants to go back
+              child: Text("Cancel"),
+              onPressed: () {
+                Navigator.pop(context);
               },
-            )**/
+            )
           ],
         ));
   }
 
+  /**
+   * checks the given name to see if it is available on the
+   * server, returns a bool, true if it is available false 
+   * if its not.
+   * @param name the name to check on the server
+   */
   Future<bool> checkName(String name) async {
+    //checks the name from the database
     var response = await http
         .get("http://$stakServerUrl/stakSwipe/checkName.php?name=$name");
     return response.body == "available";
   }
 
+  /**
+   * checks the name given before adding it to 
+   * both the database and the username list
+   * @param the name that is attempting to be added
+   */
   void addName(String name) async {
-    checked = await checkName(name);
+    checked = await checkName(name); //check the name
     if (checked) {
-      UserName newUser = new UserName(name);
-      names.add(name);
-      userNames.add(newUser);
+      UserName newUser = new UserName(name); //create a new username
+      names.add(name); //add it to the string list of names
+      userNames.add(newUser); //add it to the username list
       var response = await http.post(
+          //post it to the server
           "http://$stakServerUrl/stakSwipe/newUser.php",
           body: {'name': name, 'number': "${newUser.id}"});
-      currentUser = name;
+      currentUser = name; //set the current user to the one that was just added
       var prefs =
           await SharedPreferences.getInstance(); //get the shared preferences
       String userNamesJson = encoder.convert(userNames);
-      prefs.setString('names', userNamesJson);
+      prefs.setString('names', userNamesJson); //save the usernames
     }
   }
 
@@ -300,6 +357,7 @@ class _MyHomePageState extends State<MyHomePage> {
     String tagJson = prefs.getString('taglist') ?? "0";
     String placeJson = prefs.getString('place') ?? "0";
     if (tagJson == "0") {
+      cardq = introCard();
       return;
     }
     //convert them to a map
@@ -308,9 +366,11 @@ class _MyHomePageState extends State<MyHomePage> {
     //convert that map into the taglist and placelist
     tagList = new TagList.fromJson(tagmap);
     placeList = new PlaceList.fromJson(placemap);
+    cardq = new Queue();
+    cardq.add(newCard());
+    cardq.add(newCard());
+    cardq.add(newCard());
   }
-
-  
 
   /**
    * gets the json information for a tag based on its place, source and the name 
@@ -362,11 +422,70 @@ class _MyHomePageState extends State<MyHomePage> {
    */
   void removeCard() {
     save(); //save the placelist and taglist
-    card3 = card2; //move each card up one and assign a new card to the bottom
-    card2 = card1;
-    card1 = newCard();
+    cardq.removeLast();
+    cardq.addFirst(newCard());
 
     setState(() {});
+  }
+
+  Queue<Widget> introCard() {
+    Queue<Widget> queue = new Queue();
+    Widget card1 = new Container(
+      //the card widget
+      padding: EdgeInsets.all(20.0),
+      child: new Dismissible(
+        child: new Card(
+          child: Column(
+            children: <Widget>[
+              Text("Welcome To StakSwipe"),
+              Text(
+                  "StakSwipe is a media aggregation app to view all of you favorite content. Using the app is simple jusr right swipe stuff that you like or want to see more of and left swipe stuff hat you want to see less, try it out swipe away this card"),
+            ],
+          ),
+        ),
+        onDismissed: (DismissDirection direction) {
+            removeCard();
+          },
+      ),
+    );
+    queue.add(card1);
+    Widget card2 = new Container(
+        //the card widget
+        padding: EdgeInsets.all(20.0),
+        child: new Dismissible(
+          child: new Card(
+            child: Column(
+              children: <Widget>[
+                Text("Other Features"),
+                Text(
+                    "Currently stakswipe takes from two sources reddit and its own server. If you want to Post to the stakswipe server press the button in the top right. You can also add or remove tags from your interests with the other two buttons to the left of the post button. In order to post You'll need a name swipe to see how to set that up"),
+              ],
+            ),
+          ),
+          onDismissed: (DismissDirection direction) {
+            removeCard();
+          },
+        ));
+    queue.add(card2);
+    Widget card3 = new Container(
+        //the card widget
+        padding: EdgeInsets.all(20.0),
+        child: new Dismissible(
+          child: new Card(
+            child: Column(
+              children: <Widget>[
+                Text("The sidebar"),
+                Text(
+                    "In the upper left is a button to open up the sidebar. In there you can navigate to your posts, your list which contains all your interests as well as their percentages and you can create a name. Names are completely optionial in stakswipe, you only need one if you want to post content. Creating a name in stakswipe is easy, just pick a name and hit enter if its available you can hit submit. No password is required and the name is tied to your device so no one else can impersonate you. Now your ready to start swipe on this to start going through content.")
+              ],
+            ),
+          ),
+          onDismissed: (DismissDirection direction) {
+            removeCard();
+          },
+        ));
+        queue.add(card3);
+        return queue;
   }
 
   /**
@@ -423,6 +542,7 @@ class _MyHomePageState extends State<MyHomePage> {
           //sets the place for the tag and the popular if it is popular
           if (isPopular) placeList.setPlace("popular", source, dataPlace);
           placeList.setPlace(sub, source, dataPlace);
+          print(dataPlace);
           //prevents a bug where the top card is rendered briefly after it has been dismissed
           if ((index - thisIndex) == 2) {
             //if it it the top card
@@ -476,7 +596,9 @@ class _MyHomePageState extends State<MyHomePage> {
                       style: new TextStyle(fontSize: 25.0, color: Colors.black),
                     ),
                     new Image.network(url), //the corresponding picture
-                    new Comment(url: "https://www.reddit.com$comments.json",)
+                    new Comment(
+                      url: "https://www.reddit.com$comments.json",
+                    )
                   ],
                 ),
               ),
@@ -487,7 +609,7 @@ class _MyHomePageState extends State<MyHomePage> {
 
   @override
   Widget build(BuildContext context) {
-    cardList = [card1, card2, card3]; //makes the three cards into a list
+    cardList = cardq.toList(); //makes the three cards into a list
     return new Scaffold(
       appBar: new AppBar(
         title: new Text(widget.title),
@@ -508,7 +630,10 @@ class _MyHomePageState extends State<MyHomePage> {
             onPressed: () {
               Navigator.push(
                 context,
-                MaterialPageRoute(builder: (context) => PostingPage(username: currentUser,)),
+                MaterialPageRoute(
+                    builder: (context) => PostingPage(
+                          username: currentUser,
+                        )),
               );
             },
             icon: new Icon(Icons.library_add),
@@ -527,13 +652,28 @@ class _MyHomePageState extends State<MyHomePage> {
               trailing: Icon(Icons.library_add),
               onTap: () {
                 Navigator.pop(context);
-                Navigator.push(context,
-                    MaterialPageRoute(builder: (context) => PostsPage(username: currentUser,)));
+                Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                        builder: (context) => PostsPage(
+                              username: currentUser,
+                            )));
               },
             ),
             new ListTile(
               title: Text("My Shares"),
               trailing: Icon(Icons.share),
+            ),
+            new ListTile(
+              title: Text("My List"),
+              trailing: Icon(Icons.list),
+              onTap: () {
+                Navigator.pop(context);
+                Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                        builder: (context) => TagPage(list: tagList)));
+              },
             ),
             new Divider(),
             new ListTile(
@@ -549,7 +689,7 @@ class _MyHomePageState extends State<MyHomePage> {
               onTap: () {
                 createAccountDialog();
               },
-            )
+            ),
           ],
         ),
       ),

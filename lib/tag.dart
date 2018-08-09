@@ -365,8 +365,9 @@ class TagList {
       List<int> nullNumber = [number];
       def.take(nullNumber);
     }
-    while(lastTag!=null && lastTag==list[number])
+    while(lastTag!=null && lastTag==list[number] && lastTag.name != "popular")
      number = generator.nextInt(10000);
+    lastTag = list[number];
     return list[number];
   }
   /**
@@ -374,9 +375,9 @@ class TagList {
    * ass the all tags list
    * @param tag the name of the tag to be removed
    */
-  void removeTag(String name, String source){
+  void removeTag(SourceName sourceName){
     List<int> removed = new List();
-    SourceName tag = new SourceName(name, source);
+    SourceName tag = new SourceName(sourceName.name, sourceName.source);
     for(int i = 0; i<10000;i++){
       if(list[i] == tag){
         list[i] = new SourceName("popular", "reddit");

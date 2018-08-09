@@ -1,3 +1,8 @@
+/**
+ * this handles the comments for reddit that are displayed below each 
+ * of the card. it creates a tree of the comment widget where each is
+ * held in a column where the replies to a comment are its children
+ */
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:async';
@@ -5,113 +10,97 @@ import 'dart:convert';
 
 class Comment extends StatefulWidget {
   Comment({Key key, this.map, this.indent, this.url}) : super(key: key);
-  Map<String, dynamic> map;
+  Map<String, dynamic>
+      map; //the map containing the body of the comment as well as the reply tree
   final int indent;
   String url;
   _CommentState createState() => _CommentState();
 }
 
 class _CommentState extends State<Comment> {
+  /**
+   * returns the list of comment maps from a url which
+   * each of the comments initially starts off as
+   */
   Future<List<dynamic>> fromUrl() async {
     JsonDecoder decoder = new JsonDecoder();
-    var response = await http.get(Uri.encodeFull(widget.url),
-        headers: {"Accept": "applications/json"});
-    var mapjson = decoder.convert(response.body);
-    return mapjson[1]["data"]["children"];
+    var response = await http.get(Uri.encodeFull(widget.url), headers: {
+      "Accept": "applications/json"
+    }); //get the list from the server
+    var mapjson = decoder.convert(response.body); //convert it to a list
+    return mapjson[1]["data"][
+        "children"]; //return the second one in the list, the first one is the content
   }
 
+  /**
+   * returns a list of widgets derived from a list of maps and converts
+   * them each to a comment widget.
+   * @param list the list of maps that contains each comments body and replies
+   * @param i the indent/ level in the tree
+   */
   List<Widget> getComments(List<dynamic> list, int i) {
-    List<Widget> endList = new List();
+    List<Widget> endList = new List(); //list to store the result in
     for (var c in list) {
-      if (c["data"]["body"] != null)
+      //go through the list given
+      if (c["data"]["body"] != null) //skip if it doesn't have a body
         endList.add(Comment(
+          //add it to the list
           map: c,
           indent: i,
         ));
     }
-    return endList;
+    return endList; //return the finished list
   }
 
+  /**
+   * build the comment tree
+   */
   Widget build(BuildContext context) {
     if (widget.url != null) {
+      //if a url was entered it becomes the root of a new tree
       return FutureBuilder(
           future: fromUrl(),
           builder: (BuildContext context, AsyncSnapshot snapshot) {
-            var list = snapshot.data;
-            List<Widget> widgetList = getComments(list, 0);
+            var list = snapshot.data; //get the list from the fromUrl method
+            List<Widget> widgetList =
+                getComments(list, 0); //make a list of comments from it
             return Column(
+              //make a column of that list
               children: widgetList,
             );
           });
     } else {
-      String indent ="";
-      for(int i = 0; i< widget.indent; i++){
-        indent+="  ";
+      //else it is a non root node
+      String indent = ""; //used to indent the comment for formatting
+      for (int i = 0; i < widget.indent; i++) {
+        indent += "  ";
       }
       if (widget.map["data"]["replies"] != "") {
+        //if it has replies append them to the end of the column
         return Column(
-          children: <Widget>[ListTile(
-                    title: Text(
-                      (indent+widget.map["data"]["body"]),
-                      textAlign: TextAlign.left,
-                    ),
+          children: <Widget>[
+                ListTile(
+                  title: Text(
+                    (indent + widget.map["data"]["body"]),
+                    textAlign: TextAlign.left,
                   ),
+                  subtitle: Text("Written by: ${widget.map["data"]["author"]} Score: ${widget.map["data"]["score"]}"),
+                ),
               ] +
               getComments(
-                  widget.map["data"]["replies"]["data"]["children"], widget.indent+1),
+                  //add the replies below the parent comment and increment the indent
+                  widget.map["data"]["replies"]["data"]["children"],
+                  widget.indent + 1),
         );
-      } else {
+      } else {//if it doesn't have any replies just return one of the list tiles
         return ListTile(
-            title: Text(
-              (indent+widget.map["data"]["body"]),
-              textAlign: TextAlign.left,
-            ),
+          title: Text(
+            (indent + widget.map["data"]["body"]),
+            textAlign: TextAlign.left,
+          ),
+          subtitle: Text("written by: ${widget.map["data"]["author"]}"),
         );
       }
     }
-    /** 
-          return ListView.builder(
-            itemCount: 6,
-            itemBuilder: (BuildContext context, int index) {
-              print("comment body: ${map[index]["data"]["body"]}");
-              if (map[index]["data"]["replies"] == "") {
-                return new ListTile(
-                  title: new Text(map[index]["data"]["body"]),
-                );
-              } else {
-                return new Column(
-                  children: <Widget>[
-                    new Text(map[index]["data"]["body"]),
-                    new Comments(
-                      map: map[index]["data"]["replies"]["data"]["children"],
-                      indent: indent++,
-                    )
-                  ],
-                );
-              }
-            },
-          );
-        },
-      );
-    }
-    return ListView.builder(
-      itemCount: 6,
-      itemBuilder: (BuildContext context, int index) {
-        print("comment body: ${map[index]["data"]["body"]}");
-        if (map[index]["data"]["replies"] == "") {
-          return new ListTile(
-            title: new Text(map[index]["data"]["body"]),
-          );
-        } else {
-          return new Column(
-            children: <Widget>[
-              new Text(map[index]["data"]["body"]),
-              new Comments(
-                map: map[index]["data"]["replies"]["data"]["children"],
-                indent: indent++,
-              )
-            ],
-          );
-        }**/
   }
 }
