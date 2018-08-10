@@ -71,17 +71,15 @@ class _CommentState extends State<Comment> {
           });
     } else {
       //else it is a non root node
-      String indent = ""; //used to indent the comment for formatting
-      for (int i = 0; i < widget.indent; i++) {
-        indent += "  ";
-      }
+      
       if (widget.map["data"]["replies"] != "") {
         //if it has replies append them to the end of the column
         return Column(
           children: <Widget>[
                 ListTile(
+                  contentPadding: EdgeInsets.only(left: 20.0*widget.indent),
                   title: Text(
-                    (indent + widget.map["data"]["body"]),
+                    (widget.map["data"]["body"]),
                     textAlign: TextAlign.left,
                   ),
                   subtitle: Text("Written by: ${widget.map["data"]["author"]} Score: ${widget.map["data"]["score"]}"),
@@ -94,8 +92,9 @@ class _CommentState extends State<Comment> {
         );
       } else {//if it doesn't have any replies just return one of the list tiles
         return ListTile(
+          contentPadding: EdgeInsets.only(left: 20.0*widget.indent),
           title: Text(
-            (indent + widget.map["data"]["body"]),
+            (widget.map["data"]["body"]),
             textAlign: TextAlign.left,
           ),
           subtitle: Text("written by: ${widget.map["data"]["author"]}"),

@@ -74,7 +74,7 @@ class _MyHomePageState extends State<MyHomePage> {
     placeList = new PlaceList();
     restore(); //restore the lists if they are in the phones memory
     //create three new cards
-    
+
     setState(() {});
   }
 
@@ -357,7 +357,9 @@ class _MyHomePageState extends State<MyHomePage> {
     String tagJson = prefs.getString('taglist') ?? "0";
     String placeJson = prefs.getString('place') ?? "0";
     if (tagJson == "0") {
-      cardq = introCard();
+      setState(() {
+        cardq = introCard();
+      });
       return;
     }
     //convert them to a map
@@ -367,9 +369,11 @@ class _MyHomePageState extends State<MyHomePage> {
     tagList = new TagList.fromJson(tagmap);
     placeList = new PlaceList.fromJson(placemap);
     cardq = new Queue();
-    cardq.add(newCard());
-    cardq.add(newCard());
-    cardq.add(newCard());
+    setState(() {
+      cardq.add(newCard());
+      cardq.add(newCard());
+      cardq.add(newCard());
+    });
   }
 
   /**
@@ -434,31 +438,42 @@ class _MyHomePageState extends State<MyHomePage> {
       //the card widget
       padding: EdgeInsets.all(20.0),
       child: new Dismissible(
+        key: new Key("-1"),
         child: new Card(
           child: Column(
             children: <Widget>[
-              Text("Welcome To StakSwipe"),
               Text(
-                  "StakSwipe is a media aggregation app to view all of you favorite content. Using the app is simple jusr right swipe stuff that you like or want to see more of and left swipe stuff hat you want to see less, try it out swipe away this card"),
+                "Welcome To StakSwipe",
+                style: new TextStyle(fontSize: 25.0, color: Colors.black),
+              ),
+              Text(
+                "StakSwipe is a media aggregation app to view all of you favorite content. Using the app is simple jusr right swipe stuff that you like or want to see more of and left swipe stuff hat you want to see less, try it out swipe away this card",
+                style: new TextStyle(fontSize: 15.0, color: Colors.black),
+              )
             ],
           ),
         ),
         onDismissed: (DismissDirection direction) {
-            removeCard();
-          },
+          removeCard();
+        },
       ),
     );
-    queue.add(card1);
     Widget card2 = new Container(
         //the card widget
         padding: EdgeInsets.all(20.0),
         child: new Dismissible(
+          key: new Key("-2"),
           child: new Card(
             child: Column(
               children: <Widget>[
-                Text("Other Features"),
                 Text(
-                    "Currently stakswipe takes from two sources reddit and its own server. If you want to Post to the stakswipe server press the button in the top right. You can also add or remove tags from your interests with the other two buttons to the left of the post button. In order to post You'll need a name swipe to see how to set that up"),
+                  "Other Features",
+                  style: new TextStyle(fontSize: 25.0, color: Colors.black),
+                ),
+                Text(
+                  "Currently stakswipe takes from two sources reddit and its own server. If you want to Post to the stakswipe server press the button in the top right. You can also add or remove tags from your interests with the other two buttons to the left of the post button. In order to post You'll need a name swipe to see how to set that up",
+                  style: new TextStyle(fontSize: 15.0, color: Colors.black),
+                ),
               ],
             ),
           ),
@@ -466,17 +481,22 @@ class _MyHomePageState extends State<MyHomePage> {
             removeCard();
           },
         ));
-    queue.add(card2);
     Widget card3 = new Container(
         //the card widget
         padding: EdgeInsets.all(20.0),
         child: new Dismissible(
+          key: new Key("-3"),
           child: new Card(
             child: Column(
               children: <Widget>[
-                Text("The sidebar"),
                 Text(
-                    "In the upper left is a button to open up the sidebar. In there you can navigate to your posts, your list which contains all your interests as well as their percentages and you can create a name. Names are completely optionial in stakswipe, you only need one if you want to post content. Creating a name in stakswipe is easy, just pick a name and hit enter if its available you can hit submit. No password is required and the name is tied to your device so no one else can impersonate you. Now your ready to start swipe on this to start going through content.")
+                  "The sidebar",
+                  style: new TextStyle(fontSize: 25.0, color: Colors.black),
+                ),
+                Text(
+                  "In the upper left is a button to open up the sidebar. In there you can navigate to your posts, your list which contains all your interests as well as their percentages and you can create a name. Names are completely optionial in stakswipe, you only need one if you want to post content. Creating a name in stakswipe is easy, just pick a name and hit enter if its available you can hit submit. No password is required and the name is tied to your device so no one else can impersonate you. Now your ready to start swipe on this to start going through content.",
+                  style: new TextStyle(fontSize: 15.0, color: Colors.black),
+                )
               ],
             ),
           ),
@@ -484,8 +504,10 @@ class _MyHomePageState extends State<MyHomePage> {
             removeCard();
           },
         ));
-        queue.add(card3);
-        return queue;
+    queue.add(card3);
+    queue.add(card2);
+    queue.add(card1);
+    return queue;
   }
 
   /**
@@ -518,6 +540,7 @@ class _MyHomePageState extends State<MyHomePage> {
           String author;
           String dataPlace;
           String comments;
+          String text = "";
           if (data["data"] != null) {
             dataSource = "reddit";
             var listing = data["data"]["children"];
@@ -528,6 +551,7 @@ class _MyHomePageState extends State<MyHomePage> {
               sub = data["data"]["children"][0]["data"]["subreddit"];
               author = data["data"]["children"][0]["data"]["author"];
               dataPlace = data["data"]["after"];
+              text = data["data"]["children"][0]["data"]["selftext"];
               comments = data["data"]["children"][0]["data"]["permalink"];
             } else
               return newCard();
@@ -596,6 +620,7 @@ class _MyHomePageState extends State<MyHomePage> {
                       style: new TextStyle(fontSize: 25.0, color: Colors.black),
                     ),
                     new Image.network(url), //the corresponding picture
+                    new Text("$text \nComments:"),
                     new Comment(
                       url: "https://www.reddit.com$comments.json",
                     )

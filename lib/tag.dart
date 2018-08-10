@@ -365,7 +365,7 @@ class TagList {
       List<int> nullNumber = [number];
       def.take(nullNumber);
     }
-    while(lastTag!=null && lastTag==list[number] && lastTag.name != "popular")
+    while(lastTag!=null && lastTag.name==list[number].name)
      number = generator.nextInt(10000);
     lastTag = list[number];
     return list[number];
