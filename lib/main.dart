@@ -583,7 +583,7 @@ class _MyHomePageState extends State<MyHomePage> {
             padding: EdgeInsets.all(20.0),
             child: new Dismissible(
               //it is a dismissible which allows for easily handling the animation
-              key: Key("$index"),
+              key:i,
               onDismissed: (direction) {
                 switch (direction) {
                   //checks which direction it went, if left it dislikes, if right it likes
