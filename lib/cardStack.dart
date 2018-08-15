@@ -7,18 +7,13 @@ import 'tag.dart';
 import 'placeList.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-class CardStack extends StatefulWidget{
-  CardStack({Key key, this.numCards}):super(key:key);
-  final int numCards;
-
-  _CardStackState createState() => new _CardStackState();
-}
-
-class _CardStackState extends State<CardStack>{
-  Widget build(BuildContext context){
-
+class CardStack extends StatelessWidget {
+  CardStack({Key key, this.currentIndex}) : super(key: key);
+  final int currentIndex;
+  Widget build(BuildContext context) {
+    CardHandler handler = CardHandler.of(context);
     return new Stack(
-      children: CardHandler.of(context).cardQueue.toList(),
+      children: handler.cardQueue.toList(),
     );
   }
 }
@@ -26,8 +21,8 @@ class _CardStackState extends State<CardStack>{
 class CardHandler extends InheritedWidget {
   final TagList list;
   final PlaceList place;
-  final Queue<ContentCard> cardQueue;
-  int index = 0;
+  final Queue<Widget> cardQueue;
+  int index = 2;
 
   CardHandler({
     Key key,
@@ -45,7 +40,11 @@ class CardHandler extends InheritedWidget {
 
   void removeCard() {
     cardQueue.removeLast();
-    cardQueue.addFirst( ContentCard(index: index,)) ; 
+    index++;
+    cardQueue.addFirst(ContentCard(
+      index: index,
+    ));
+    
     /**cardQueue.addFirst(new ContentCard(index: index,));
     for(ContentCard c in cardQueue.toList()){
       print(c.index);
@@ -53,7 +52,7 @@ class CardHandler extends InheritedWidget {
   }
 
   @override
-  bool updateShouldNotify(CardHandler old) => cardQueue != old.cardQueue;
+  bool updateShouldNotify(CardHandler old) => index != old.index;
 }
 
 class ContentCard extends StatefulWidget {
@@ -63,7 +62,6 @@ class ContentCard extends StatefulWidget {
   TagList list;
   List<Widget> cardList;
   PlaceList place;
-  
 
   _ContentCardState createState() => new _ContentCardState();
 }
@@ -73,11 +71,10 @@ class _ContentCardState extends State<ContentCard> {
   String url;
   String author;
   String sub;
-  void initState(){
+  void initState() {
     super.initState();
-    print(widget.index);
   }
-  
+
   /**
    * gets the json information for a tag based on its place, source and the name 
    * of the tag
@@ -106,21 +103,19 @@ class _ContentCardState extends State<ContentCard> {
 
     return response.body;
   }
-  
 
   Widget build(BuildContext context) {
     CardHandler cardHandler = CardHandler.of(context);
-    String tag = cardHandler.list.getTag();
+    SourceName tag = cardHandler.list.getTag();
     bool isPopular = (tag == "popular");
     String source = "reddit";
-    String place = cardHandler.place.getPlace(tag, source);
-    cardHandler.index++;
+    String place = cardHandler.place.getPlace(tag.name, tag.source);
     bool firstRender =
         true; //checks if its first render, used to prevent a flashing bug
     int thisIndex = cardHandler.index;
     return new FutureBuilder(
-        future: getData(
-            tag, place, source), //gets the json data from the getdata function
+        future: getData(tag.name, place,
+            tag.source), //gets the json data from the getdata function
         builder: (BuildContext context, AsyncSnapshot snapshot) {
           var data = JSON.decode(snapshot.data); //format the data into a map
           //get all the data from the map and assign it to variables
@@ -131,12 +126,9 @@ class _ContentCardState extends State<ContentCard> {
           //print("title: $title index: ${widget.index}");
           //sets the place for the tag and the popular if it is popular
           if (isPopular)
-            cardHandler
-                .place
+            cardHandler.place
                 .setPlace("popular", source, data["data"]["after"]);
-          cardHandler
-              .place
-              .setPlace(sub, source, data["data"]["after"]);
+          cardHandler.place.setPlace(sub, source, data["data"]["after"]);
           //prevents a bug where the top card is rendered briefly after it has been dismissed
           /**if ((cardHandler.index - thisIndex) == 3) {
             //if it it the top card
@@ -154,17 +146,18 @@ class _ContentCardState extends State<ContentCard> {
             width: 350.0,
             child: new Dismissible(
               //it is a dismissible which allows for easily handling the animation
-              key: Key("${cardHandler.index}"),
+              key: Key("$widget.index}"),
               onDismissed: (direction) {
+                print(widget.index);
+                cardHandler.removeCard();
                 switch (direction) {
                   //checks which direction it went, if left it dislikes, if right it likes
                   case DismissDirection.startToEnd:
-                    CardHandler.of(context).list.like(sub);
-                    print("right");
+                    cardHandler.list.like(sub, "reddit");
                     break;
                   case DismissDirection.endToStart:
-                    print("left");
-                    CardHandler.of(context).list.dislike(sub);
+                    cardHandler.list.dislike(sub, "reddit");
+                    
                     break;
                   default:
                     break;

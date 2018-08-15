@@ -18,6 +18,8 @@ import 'name.dart';
 import 'userPostsPage.dart';
 import 'comments.dart';
 import 'tagListPage.dart';
+import 'cardStack.dart';
+import 'dialogs.dart';
 
 void main() => runApp(new MyApp());
 
@@ -62,6 +64,12 @@ class _MyHomePageState extends State<MyHomePage> {
   String currentUser = "none";
   bool checked = false;
 
+  String currentTitle;
+  String currentLink;
+  String currentAuthor;
+  String currentCommentLink;
+  String currentSelfText;
+
   void initState() {
     encoder = new JsonEncoder(); //initialize the encoder and decoder
     decoder = new JsonDecoder();
@@ -97,8 +105,20 @@ class _MyHomePageState extends State<MyHomePage> {
       //add the string version to the names list
       names.add(u.name);
     }
-    currentUser = names[0]; //set the current user
+    int i = 0;
+    while(i<userNames.length && !(await login(userNames[i].name, userNames[i].id)))
+      i++;
+    if(i== userNames.length-1 && !(await login(userNames[i].name, userNames[i].id)))
+      currentUser = "no valid names";
+    else
+      currentUser = names[i]; //set the current user
     setState(() {});
+  }
+
+  Future<bool> login(String name, int number)async{
+     var response = await http
+        .get("http://$stakServerUrl/stakSwipe/checkName.php?name=$name&number=$number");
+    return response.body == "true";
   }
 
   /**
@@ -117,70 +137,9 @@ class _MyHomePageState extends State<MyHomePage> {
    * to the taglist by liking it once.
    */
   Future<Null> addTagDialog() async {
-    contentSource source = contentSource.reddit; //the enum to store the source
-    String tag; //the tag that will be added
     addTag(await showDialog(
         context: context,
-        child: new SimpleDialog(
-          //inflate a dialog
-          title: new Text("Add a tag"),
-          children: <Widget>[
-            new TextField(
-              onChanged: (text) {
-                //update the tag when the text is changed
-                setState(() {
-                  tag = text;
-                });
-              },
-            ),
-            new RadioListTile<contentSource>(
-              //radio tiles to decide what source its from
-              title: const Text("Reddit"),
-              value: contentSource.reddit,
-              groupValue: source,
-              onChanged: (contentSource value) {
-                setState(() {
-                  source = value;
-                });
-              },
-            ),
-            new RadioListTile<contentSource>(
-              title: const Text("StakSwipe"),
-              value: contentSource.stakswipe,
-              groupValue: source,
-              onChanged: (contentSource value) {
-                setState(() {
-                  source = value;
-                });
-              },
-            ),
-            FlatButton(
-              //submit button
-              child: Text("Add $tag"),
-              onPressed: () {
-                String stringSource;
-                switch (source) {
-                  case contentSource.reddit:
-                    stringSource = "reddit";
-                    break;
-                  case contentSource.stakswipe:
-                    stringSource = "stakswipe";
-                    break;
-                }
-                Navigator.pop(context, new SourceName(tag, stringSource));
-              }, //after submitted pops it with a new sourcename
-            ),
-            FlatButton(
-              child: Text("Cancel"),
-              onPressed: () {
-                Navigator.pop(
-                    context,
-                    new SourceName("cancel",
-                        "cancel")); //sets the sourcename to cancel so the addTag method can just return
-              },
-            )
-          ],
-        )));
+        child: new AddDialog()));
   }
 
   /**
@@ -189,69 +148,10 @@ class _MyHomePageState extends State<MyHomePage> {
    * from the taglist.
    */
   Future<Null> removeTagDialog() async {
-    contentSource source = contentSource.reddit; //the enum to store the source
-    String tag = "";
     tagList.removeTag(
       await showDialog(
           context: context,
-          child: new SimpleDialog(
-            title: new Text("Remove a tag"),
-            children: <Widget>[
-              new TextField(
-                onChanged: (text) {
-                  //update the tag when the text is changed
-                  setState(() {
-                    tag = text;
-                  });
-                },
-              ),
-              new RadioListTile(
-                title: const Text("Reddit"),
-                value: contentSource.reddit,
-                groupValue: source,
-                onChanged: (contentSource value) {
-                  setState(() {
-                    source = value;
-                  });
-                },
-              ),
-              new RadioListTile(
-                title: const Text("StakSwipe"),
-                value: contentSource.stakswipe,
-                groupValue: source,
-                onChanged: (contentSource value) {
-                  setState(() {
-                    source = value;
-                  });
-                },
-              ),
-              FlatButton(
-                //submit button
-                child: Text("Add $tag"),
-                onPressed: () {
-                  String stringSource;
-                  switch (source) {
-                    case contentSource.reddit:
-                      stringSource = "reddit";
-                      break;
-                    case contentSource.stakswipe:
-                      stringSource = "stakswipe";
-                      break;
-                  }
-                  Navigator.pop(context, new SourceName(tag, stringSource));
-                }, //after submitted pops it with a new sourcename
-              ),
-              FlatButton(
-                child: Text("Cancel"),
-                onPressed: () {
-                  Navigator.pop(
-                      context,
-                      new SourceName("cancel",
-                          "cancel")); //sets the sourcename to cancel so the addTag method can just return
-                },
-              )
-            ],
-          )),
+          child: new RemoveDialog()),
     );
   }
 
@@ -277,13 +177,17 @@ class _MyHomePageState extends State<MyHomePage> {
               },
             ),
             FlatButton(
-              child: Text(buttonText),
+              
               onPressed: () {
                 if (checked) //if its checked and added, exit
                   Navigator.pop(context);
                 else
-                  buttonText = "Name Taken";
+                setState(() {
+                  buttonText = "Name Taken";                
+                                });
+                  
               },
+              child: Text(buttonText),
             ),
             FlatButton(
               //cancel out if user wants to go back
@@ -376,6 +280,9 @@ class _MyHomePageState extends State<MyHomePage> {
     });
   }
 
+  void share(){
+    var response = http.post("http://$stakServerUrl/stakSwipe/share.php?name=$currentUser&title= $currentTitle&author=$currentAuthor&link=$currentLink&comentLink=$currentCommentLink&selfText=$currentSelfText");
+  }
   /**
    * gets the json information for a tag based on its place, source and the name 
    * of the tag
@@ -418,6 +325,20 @@ class _MyHomePageState extends State<MyHomePage> {
       }
       return response.body;
     }
+    else if (source == "stakuser") {
+      if (place == "not in") {
+        response = await http.get(
+            Uri.encodeFull(
+                "http://$stakServerUrl/stakSwipe/getUserListing.php?name=$tag&place=0;"),
+            headers: {"Accept": "applications/json"});
+      } else {
+        response = await http.get(
+            Uri.encodeFull(
+                "http://$stakServerUrl/stakSwipe/getUserListing.php?name=$tag&place=$place;"),
+            headers: {"Accept": "applications/json"});
+      }
+      return response.body;
+    }
   }
 
   /**data
@@ -427,7 +348,8 @@ class _MyHomePageState extends State<MyHomePage> {
   void removeCard() {
     save(); //save the placelist and taglist
     cardq.removeLast();
-    cardq.addFirst(newCard());
+    while(cardq.length<3)
+      cardq.addFirst(newCard());
 
     setState(() {});
   }
@@ -569,8 +491,14 @@ class _MyHomePageState extends State<MyHomePage> {
           print(dataPlace);
           //prevents a bug where the top card is rendered briefly after it has been dismissed
           if ((index - thisIndex) == 2) {
+            print(title);
             //if it it the top card
             if (firstRender) {
+              currentAuthor = author;
+              currentCommentLink = comments;
+              currentLink = url;
+              currentSelfText = text;
+              currentTitle = title;
               //and it is the first time its been rendered this time around
               firstRender = false; //set first render back to false
               return new Text(
@@ -639,6 +567,12 @@ class _MyHomePageState extends State<MyHomePage> {
       appBar: new AppBar(
         title: new Text(widget.title),
         actions: <Widget>[
+          IconButton(
+            icon: new Icon(Icons.share),
+            onPressed: () {
+              share();
+            },
+          ),
           IconButton(
             icon: new Icon(Icons.add),
             onPressed: () {
@@ -719,12 +653,9 @@ class _MyHomePageState extends State<MyHomePage> {
         ),
       ),
       body: new Center(
-        child: new GestureDetector(
-          child: new Stack(
-            children: cardList, //renders the cardlist as a stack of cards
-          ),
-        ),
-      ),
+        child:Stack(
+          children: cardList,
+        )),
     );
   }
 }

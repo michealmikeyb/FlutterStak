@@ -379,7 +379,7 @@ class TagList {
     List<int> removed = new List();
     SourceName tag = new SourceName(sourceName.name, sourceName.source);
     for(int i = 0; i<10000;i++){
-      if(list[i] == tag){
+      if(list[i].name == tag.name && list[i].source == tag.source){
         list[i] = new SourceName("popular", "reddit");
         removed.add(i);
         
