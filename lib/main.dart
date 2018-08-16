@@ -20,6 +20,7 @@ import 'comments.dart';
 import 'tagListPage.dart';
 import 'cardStack.dart';
 import 'dialogs.dart';
+import 'userShares.dart';
 
 void main() => runApp(new MyApp());
 
@@ -69,6 +70,7 @@ class _MyHomePageState extends State<MyHomePage> {
   String currentAuthor;
   String currentCommentLink;
   String currentSelfText;
+  String currentTag;
 
   void initState() {
     encoder = new JsonEncoder(); //initialize the encoder and decoder
@@ -106,18 +108,21 @@ class _MyHomePageState extends State<MyHomePage> {
       names.add(u.name);
     }
     int i = 0;
-    while(i<userNames.length && !(await login(userNames[i].name, userNames[i].id)))
-      i++;
-    if(i== userNames.length-1 && !(await login(userNames[i].name, userNames[i].id)))
-      currentUser = "no valid names";
-    else
+    while(i<userNames.length){
+    if(await login(userNames[i].name, userNames[i].id)){
       currentUser = names[i]; //set the current user
+      break;
+    }
+    else
+      i++;
+  }
     setState(() {});
   }
 
   Future<bool> login(String name, int number)async{
      var response = await http
-        .get("http://$stakServerUrl/stakSwipe/checkName.php?name=$name&number=$number");
+        .get("http://$stakServerUrl/stakSwipe/login.php?name=$name&number=$number");
+    print(response.body);
     return response.body == "true";
   }
 
@@ -280,8 +285,10 @@ class _MyHomePageState extends State<MyHomePage> {
     });
   }
 
-  void share(){
-    var response = http.post("http://$stakServerUrl/stakSwipe/share.php?name=$currentUser&title= $currentTitle&author=$currentAuthor&link=$currentLink&comentLink=$currentCommentLink&selfText=$currentSelfText");
+  void share()async{
+    String shareUrl = "http://$stakServerUrl/stakSwipe/share.php?tag=$currentTag&name=$currentUser&title= $currentTitle&author=$currentAuthor&link=$currentLink&comentLink=$currentCommentLink&selfText=$currentSelfText";
+    var response = await http.get(Uri.encodeFull(shareUrl));
+    print(" url: $shareUrl response: ${response.body}");
   }
   /**
    * gets the json information for a tag based on its place, source and the name 
@@ -492,13 +499,15 @@ class _MyHomePageState extends State<MyHomePage> {
           //prevents a bug where the top card is rendered briefly after it has been dismissed
           if ((index - thisIndex) == 2) {
             print(title);
-            //if it it the top card
-            if (firstRender) {
               currentAuthor = author;
               currentCommentLink = comments;
               currentLink = url;
               currentSelfText = text;
               currentTitle = title;
+              currentTag = sub;
+            //if it it the top card
+            if (firstRender) {
+              
               //and it is the first time its been rendered this time around
               firstRender = false; //set first render back to false
               return new Text(
@@ -622,6 +631,14 @@ class _MyHomePageState extends State<MyHomePage> {
             new ListTile(
               title: Text("My Shares"),
               trailing: Icon(Icons.share),
+              onTap: (){Navigator.pop(context);
+                Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                        builder: (context) => SharesPage(
+                              username: currentUser,
+                            )));
+                            },
             ),
             new ListTile(
               title: Text("My List"),

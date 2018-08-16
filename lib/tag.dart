@@ -196,15 +196,19 @@ class Deficit {
  * @param j amount of numbers to give to be reassigned
  */
   List<int> give(int j) {
+    places.remove(null);
+    def = places.length;
     if (def == 0) return null;
     int tempDef =
         def; //so the deficit can be used for the stop condition in the for loop
     List<int> numToGive = new List(); //list to store the given numbers
     for (int i = def; i > def - j && i > 1; i--) {
       //go through the list j times if possible
+      if(places[i-1] != null){
       numToGive.add(places[i - 1]); //copy the number
       places.removeAt(i - 1); //get rid of that number
       tempDef -= 1; //update the tempdef
+      }
     }
     def = tempDef; //put the tempdef as the deficit
     return numToGive;
@@ -216,7 +220,11 @@ class Deficit {
    * @param j the list of numbers to add to places
    */
   void take(List<int> j) {
-    for (int i in j) places.add(i); //add all the new indeces
+    for (int i in j){ 
+      places.add(i); //add all the new indeces
+      if(i==null)
+        print("inserting null");
+    }
     def = places.length; //update the def
   }
 
@@ -282,6 +290,7 @@ class TagList {
         break;
       }
     }
+    print(tag);
     //if already in get the raise by liking it
     if (alreadyIn) {
       raise = allTags[allTagsPlace].like();
@@ -365,7 +374,7 @@ class TagList {
       List<int> nullNumber = [number];
       def.take(nullNumber);
     }
-    while(lastTag!=null && lastTag.name==list[number].name)
+    while(lastTag!=null && lastTag.name==list[number].name && getPercent("popular", "reddit")<99)
      number = generator.nextInt(10000);
     lastTag = list[number];
     return list[number];
