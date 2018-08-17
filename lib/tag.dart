@@ -297,7 +297,7 @@ class TagList {
     }
     //otherwise create a new tag and add it to alltags
     else {
-      Tag t = new Tag(tag, "reddit");
+      Tag t = new Tag(tag, source);
       raise = t.firstLike();
       allTags.add(t);
       allTagsPlace = allTags.length - 1;
@@ -356,7 +356,7 @@ class TagList {
         }
       }
     } else {//if its not already in then give it first dislike then add it to alltags
-      Tag t = new Tag(tag, "reddit");
+      Tag t = new Tag(tag, source);
       t.firstDislike();
       allTags.add(t);
     }

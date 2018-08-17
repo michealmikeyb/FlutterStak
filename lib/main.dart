@@ -108,20 +108,19 @@ class _MyHomePageState extends State<MyHomePage> {
       names.add(u.name);
     }
     int i = 0;
-    while(i<userNames.length){
-    if(await login(userNames[i].name, userNames[i].id)){
-      currentUser = names[i]; //set the current user
-      break;
+    while (i < userNames.length) {
+      if (await login(userNames[i].name, userNames[i].id)) {
+        currentUser = names[i]; //set the current user
+        break;
+      } else
+        i++;
     }
-    else
-      i++;
-  }
     setState(() {});
   }
 
-  Future<bool> login(String name, int number)async{
-     var response = await http
-        .get("http://$stakServerUrl/stakSwipe/login.php?name=$name&number=$number");
+  Future<bool> login(String name, int number) async {
+    var response = await http.get(
+        "http://$stakServerUrl/stakSwipe/login.php?name=$name&number=$number");
     print(response.body);
     return response.body == "true";
   }
@@ -142,9 +141,7 @@ class _MyHomePageState extends State<MyHomePage> {
    * to the taglist by liking it once.
    */
   Future<Null> addTagDialog() async {
-    addTag(await showDialog(
-        context: context,
-        child: new AddDialog()));
+    addTag(await showDialog(context: context, child: new AddDialog()));
   }
 
   /**
@@ -154,9 +151,7 @@ class _MyHomePageState extends State<MyHomePage> {
    */
   Future<Null> removeTagDialog() async {
     tagList.removeTag(
-      await showDialog(
-          context: context,
-          child: new RemoveDialog()),
+      await showDialog(context: context, child: new RemoveDialog()),
     );
   }
 
@@ -182,15 +177,13 @@ class _MyHomePageState extends State<MyHomePage> {
               },
             ),
             FlatButton(
-              
               onPressed: () {
                 if (checked) //if its checked and added, exit
                   Navigator.pop(context);
                 else
-                setState(() {
-                  buttonText = "Name Taken";                
-                                });
-                  
+                  setState(() {
+                    buttonText = "Name Taken";
+                  });
               },
               child: Text(buttonText),
             ),
@@ -285,11 +278,13 @@ class _MyHomePageState extends State<MyHomePage> {
     });
   }
 
-  void share()async{
-    String shareUrl = "http://$stakServerUrl/stakSwipe/share.php?tag=$currentTag&name=$currentUser&title= $currentTitle&author=$currentAuthor&link=$currentLink&comentLink=$currentCommentLink&selfText=$currentSelfText";
+  void share() async {
+    String shareUrl =
+        "http://$stakServerUrl/stakSwipe/share.php?tag=$currentTag&name=$currentUser&title= $currentTitle&author=$currentAuthor&link=$currentLink&comentLink=$currentCommentLink&selfText=$currentSelfText";
     var response = await http.get(Uri.encodeFull(shareUrl));
     print(" url: $shareUrl response: ${response.body}");
   }
+
   /**
    * gets the json information for a tag based on its place, source and the name 
    * of the tag
@@ -331,8 +326,7 @@ class _MyHomePageState extends State<MyHomePage> {
             headers: {"Accept": "applications/json"});
       }
       return response.body;
-    }
-    else if (source == "stakuser") {
+    } else if (source == "stakuser") {
       if (place == "not in") {
         response = await http.get(
             Uri.encodeFull(
@@ -355,8 +349,7 @@ class _MyHomePageState extends State<MyHomePage> {
   void removeCard() {
     save(); //save the placelist and taglist
     cardq.removeLast();
-    while(cardq.length<3)
-      cardq.addFirst(newCard());
+    while (cardq.length < 3) cardq.addFirst(newCard());
 
     setState(() {});
   }
@@ -498,47 +491,49 @@ class _MyHomePageState extends State<MyHomePage> {
           print(dataPlace);
           //prevents a bug where the top card is rendered briefly after it has been dismissed
           if ((index - thisIndex) == 2) {
-            print(title);
-              currentAuthor = author;
-              currentCommentLink = comments;
-              currentLink = url;
-              currentSelfText = text;
-              currentTitle = title;
-              currentTag = sub;
             //if it it the top card
-            if (firstRender) {
-              
-              //and it is the first time its been rendered this time around
-              firstRender = false; //set first render back to false
-              return new Text(
-                  ""); //return a blank text so that nothing shows up instead of the card
-            } else
-              firstRender = true;
+            currentAuthor = author;
+            currentCommentLink = comments;
+            currentLink = url;
+            currentSelfText = text;
+            currentTitle = title;
+            currentTag = sub;
+            if ((index - thisIndex >= 2)) {
+              if (firstRender) {
+                //and it is the first time its been rendered this time around
+                firstRender = false; //set first render back to false
+                return new Text(
+                    ""); //return a blank text so that nothing shows up instead of the card
+              } else
+                firstRender = true;
+            }
           }
           return new Container(
             //the card widget
             padding: EdgeInsets.all(20.0),
             child: new Dismissible(
               //it is a dismissible which allows for easily handling the animation
-              key:i,
+              key: i,
               onDismissed: (direction) {
                 switch (direction) {
                   //checks which direction it went, if left it dislikes, if right it likes
                   case DismissDirection.startToEnd:
-                    if(dataSource == "user")
+                    if (dataSource == "user")
                       tagList.like(data['name'], "stakuser");
-                    tagList.like(sub, dataSource);
+                    else
+                      tagList.like(sub, dataSource);
                     if (source == "stakuser" || source == "stakswipe")
                       http.post("http://$stakServerUrl/stakSwipe/like.php",
                           body: {'id': data["id"]});
                     break;
                   case DismissDirection.endToStart:
-                  if(dataSource == "user")
+                    if (dataSource == "user")
                       tagList.dislike(data['name'], "stakuser");
+                    else
+                      tagList.dislike(sub, dataSource);
                     if (source == "stakuser" || source == "stakswipe")
                       http.post("http://$stakServerUrl/stakSwipe/dislike.php",
                           body: {'id': data["id"]});
-                    tagList.dislike(sub, dataSource);
                     break;
                   default:
                     break;
@@ -635,14 +630,15 @@ class _MyHomePageState extends State<MyHomePage> {
             new ListTile(
               title: Text("My Shares"),
               trailing: Icon(Icons.share),
-              onTap: (){Navigator.pop(context);
+              onTap: () {
+                Navigator.pop(context);
                 Navigator.push(
                     context,
                     MaterialPageRoute(
                         builder: (context) => SharesPage(
                               username: currentUser,
                             )));
-                            },
+              },
             ),
             new ListTile(
               title: Text("My List"),
@@ -674,9 +670,9 @@ class _MyHomePageState extends State<MyHomePage> {
         ),
       ),
       body: new Center(
-        child:Stack(
-          children: cardList,
-        )),
+          child: Stack(
+        children: cardList,
+      )),
     );
   }
 }
