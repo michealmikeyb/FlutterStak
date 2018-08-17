@@ -463,6 +463,7 @@ class _MyHomePageState extends State<MyHomePage> {
           String dataPlace;
           String comments;
           String text = "";
+          String sharedBy = "";
           if (data["data"] != null) {
             dataSource = "reddit";
             var listing = data["data"]["children"];
@@ -475,8 +476,10 @@ class _MyHomePageState extends State<MyHomePage> {
               dataPlace = data["data"]["after"];
               text = data["data"]["children"][0]["data"]["selftext"];
               comments = data["data"]["children"][0]["data"]["permalink"];
-            } else
+            } else{
+              index--;
               return newCard();
+            }
           } else {
             dataSource = data['gotten_by'];
             title = data['title'];
@@ -484,9 +487,11 @@ class _MyHomePageState extends State<MyHomePage> {
             sub = data['tag'];
             author = data['author'];
             dataPlace = data['place'];
+            if(source == "stakuser" && author != data['name'])
+              sharedBy= "Shared by: ${data['name']}";
           }
-          //sets the place for the tag and the popular if it is popular
-          if (isPopular) placeList.setPlace("popular", source, dataPlace);
+         
+          if (isPopular) placeList.setPlace("popular", source, dataPlace); //sets the place for the tag and the popular if it is popular
           placeList.setPlace(sub, source, dataPlace);
           print(dataPlace);
           //prevents a bug where the top card is rendered briefly after it has been dismissed
@@ -550,6 +555,7 @@ class _MyHomePageState extends State<MyHomePage> {
                       style: new TextStyle(fontSize: 15.0, color: Colors.grey),
                       textAlign: TextAlign.left,
                     ),
+                    new Text(sharedBy),
                     new Text(
                       //the title
                       title,
