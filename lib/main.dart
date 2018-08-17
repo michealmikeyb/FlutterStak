@@ -485,7 +485,7 @@ class _MyHomePageState extends State<MyHomePage> {
             } else
               return newCard();
           } else {
-            dataSource = "stakswipe";
+            dataSource = data['gotten_by'];
             title = data['title'];
             url = data['link'];
             sub = data['tag'];
@@ -525,13 +525,17 @@ class _MyHomePageState extends State<MyHomePage> {
                 switch (direction) {
                   //checks which direction it went, if left it dislikes, if right it likes
                   case DismissDirection.startToEnd:
+                    if(dataSource == "user")
+                      tagList.like(data['name'], "stakuser");
                     tagList.like(sub, dataSource);
-                    if (source == "stakswipe")
+                    if (source == "stakuser" || source == "stakswipe")
                       http.post("http://$stakServerUrl/stakSwipe/like.php",
                           body: {'id': data["id"]});
                     break;
                   case DismissDirection.endToStart:
-                    if (source == "stakswipe")
+                  if(dataSource == "user")
+                      tagList.dislike(data['name'], "stakuser");
+                    if (source == "stakuser" || source == "stakswipe")
                       http.post("http://$stakServerUrl/stakSwipe/dislike.php",
                           body: {'id': data["id"]});
                     tagList.dislike(sub, dataSource);
