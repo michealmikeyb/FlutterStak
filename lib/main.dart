@@ -131,7 +131,7 @@ class _MyHomePageState extends State<MyHomePage> {
   void addTag(SourceName answer) {
     if (answer.name == "cancel") return;
     setState(() {
-      tagList.like(answer.name, answer.source);
+      tagList.like(answer.name.toLowerCase(), answer.source);
     });
   }
 
@@ -526,7 +526,7 @@ class _MyHomePageState extends State<MyHomePage> {
                     if (dataSource == "user")
                       tagList.like(data['name'], "stakuser");
                     else
-                      tagList.like(sub, dataSource);
+                      tagList.like(sub.toLowerCase(), dataSource);
                     if (source == "stakuser" || source == "stakswipe")
                       http.post("http://$stakServerUrl/stakSwipe/like.php",
                           body: {'id': data["id"]});
@@ -535,7 +535,7 @@ class _MyHomePageState extends State<MyHomePage> {
                     if (dataSource == "user")
                       tagList.dislike(data['name'], "stakuser");
                     else
-                      tagList.dislike(sub, dataSource);
+                      tagList.dislike(sub.toLowerCase(), dataSource);
                     if (source == "stakuser" || source == "stakswipe")
                       http.post("http://$stakServerUrl/stakSwipe/dislike.php",
                           body: {'id': data["id"]});
