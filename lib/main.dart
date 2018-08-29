@@ -21,6 +21,9 @@ import 'tagListPage.dart';
 import 'cardStack.dart';
 import 'dialogs.dart';
 import 'userShares.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'listing.dart';
+import 'contentCard.dart';
 
 void main() => runApp(new MyApp());
 
@@ -55,6 +58,7 @@ class _MyHomePageState extends State<MyHomePage> {
   TagList tagList; //the taglist holding the users likes and interest
   PlaceList
       placeList; //holds the place in each tag so the user can continually go through
+  ListingList list;
   int index; //the index of the current card/ the number of card
   JsonEncoder encoder; //json encoder used for saving the taglist and placelist
   JsonDecoder
@@ -270,6 +274,7 @@ class _MyHomePageState extends State<MyHomePage> {
     //convert that map into the taglist and placelist
     tagList = new TagList.fromJson(tagmap);
     placeList = new PlaceList.fromJson(placemap);
+    list = new ListingList(tagList, placeList);
     cardq = new Queue();
     setState(() {
       cardq.add(newCard());
@@ -449,6 +454,25 @@ class _MyHomePageState extends State<MyHomePage> {
         true; //checks if its first render, used to prevent a flashing bug
     Key i = Key("$index");
     int thisIndex = index;
+    if(source== "reddit"){
+    Listing listing = list.getListing();
+    return new Dismissible(
+      key: i,
+      onDismissed: (direction) {
+          removeCard();
+          switch (direction) {
+                  //checks which direction it went, if left it dislikes, if right it likes
+                  case DismissDirection.startToEnd:
+                  list.like(listing.tag);
+                  break;
+                  case DismissDirection.endToStart:
+                  list.dislike(listing.tag);
+                  break;
+          }
+      },
+      child: new ContentCard(listing: listing),
+    );
+    }
     return new FutureBuilder(
         future: getData(
             name, place, source), //gets the json data from the getdata function
@@ -572,6 +596,109 @@ class _MyHomePageState extends State<MyHomePage> {
             ),
           );
         });
+        /** 
+        else{
+          return new StreamBuilder(
+            stream: Firestore.instance.collection('listings').orderBy('adjusted_score').where('tag', isEqualTo: tag).snapshots(),
+            builder:(BuildContext context, AsyncSnapshot<QuerySnapshot> snapshot){
+              if(!snapshot.hasData) return CircularProgressIndicator();
+              int numPlace = int.parse(place);
+              var data = snapshot.data.documents[numPlace];
+              String title = data['title'];
+              String author = data['author'];
+              String link = data['link'];
+              String text = data['text'];
+              String comments = data['comments'];
+              placeList.setPlace(tag.name, source, "${numPlace++}");
+
+               if ((index - thisIndex) == 2) {
+            //if it it the top card
+            currentAuthor = author;
+            currentCommentLink = comments;
+            currentLink = link;
+            currentSelfText = text;
+            currentTitle = title;
+            currentTag = tag.name;
+            if ((index - thisIndex >= 2)) {
+              if (firstRender) {
+                //and it is the first time its been rendered this time around
+                firstRender = false; //set first render back to false
+                return new Text(
+                    ""); //return a blank text so that nothing shows up instead of the card
+              } else
+                firstRender = true;
+            }
+          }
+          return new Container(
+            //the card widget
+            padding: EdgeInsets.all(20.0),
+            child: new Dismissible(
+              //it is a dismissible which allows for easily handling the animation
+              key: i,
+              onDismissed: (direction) {
+                switch (direction) {
+                  //checks which direction it went, if left it dislikes, if right it likes
+                  case DismissDirection.startToEnd:
+                    if (source == "stakuser")
+                      tagList.like(data['author'], "stakuser");
+                    else
+                      tagList.like(tag.name.toLowerCase(), source);
+                    if (source == "stakuser" || source == "stakswipe")
+                      Firestore.instance.runTransaction((transaction) async{
+                         var freshSnap = await transaction.get(data.reference);
+                         await transaction.update(freshSnap.reference, {
+                           'score': freshSnap.data['score']++
+                         });
+                         });
+                    break;
+                  case DismissDirection.endToStart:
+                    if (source == "user")
+                      tagList.dislike(data['author'], "stakuser");
+                    else
+                      tagList.dislike(tag.name.toLowerCase(), source);
+                    if (source == "stakuser" || source == "stakswipe")
+                      Firestore.instance.runTransaction((transaction) async{
+                         var freshSnap = await transaction.get(data.reference);
+                         await transaction.update(freshSnap.reference, {
+                           'score': freshSnap.data['score']--
+                         });
+                         });
+                    break;
+                  default:
+                    break;
+                }
+                removeCard(); //remove the top card
+              },
+              child: Card(
+                //the card
+                elevation: 50.0,
+                child: new ListView(
+                  children: <Widget>[
+                    new Text(
+                      "Posted on: $sub \n By: $author", //where it came from
+                      style: new TextStyle(fontSize: 15.0, color: Colors.grey),
+                      textAlign: TextAlign.left,
+                    ),
+                    new Text(sharedBy),
+                    new Text(
+                      //the title
+                      title,
+                      style: new TextStyle(fontSize: 25.0, color: Colors.black),
+                    ),
+                    new Image.network(url), //the corresponding picture
+                    new Text("$text \nComments:"),
+                    new Comment(
+                      url: "https://www.reddit.com$comments.json",
+                    )
+                  ],
+                ),
+              ),
+            ),
+          );
+
+            }
+          );
+        }**/
   }
 
   @override

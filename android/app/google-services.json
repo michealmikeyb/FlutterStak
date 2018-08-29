@@ -1,0 +1,42 @@
+{
+  "project_info": {
+    "project_number": "208165308520",
+    "firebase_url": "https://stakswipe-54e71.firebaseio.com",
+    "project_id": "stakswipe-54e71",
+    "storage_bucket": "stakswipe-54e71.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:208165308520:android:4d932eb5e2c4858d",
+        "android_client_info": {
+          "package_name": "com.example.stakswipe"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "208165308520-4a57kvs9tqbmu5m1i9a2lfo7unskumcf.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyA0E_4S4w5se7dJNcuaqDt-z0i6Vk-G6Jw"
+        }
+      ],
+      "services": {
+        "analytics_service": {
+          "status": 1
+        },
+        "appinvite_service": {
+          "status": 1,
+          "other_platform_oauth_client": []
+        },
+        "ads_service": {
+          "status": 2
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
