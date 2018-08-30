@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+import 'dart:math';
 import 'dart:async';
 import 'dart:convert';
 import 'dart:collection';
@@ -64,12 +65,12 @@ class ListingQueue {
 
   ListingQueue(this.name, int percent, this.place, this.source) {
     decoder = new JsonDecoder();
-
-    updateTag(percent);
+    listingQ = new Queue();
   }
-  void updateTag(int percent) async {
-    if (listingQ.length < percent / 2) {
-      int numToAdd = percent - listingQ.length;
+  
+  Future<bool> updateTag(int percent) async {
+    if (listingQ.length < percent / 2 && listingQ.length <= 5) {
+      int numToAdd = min(percent-listingQ.length, percent-10);
       if (source == "reddit") {
         var response;
         if (place == "not in") {
@@ -86,16 +87,19 @@ class ListingQueue {
               headers: {"Accept": "applications/json"});
         }
         var responseJson = decoder.convert(response.body);
-        for (var l in responseJson) {
+        for (var l in responseJson["data"]["children"]) {
           Listing listing;
           if (l['data'] != null) {
-            String imgLink = l["data"]["children"][0]["data"]["url"];
-            String author = l["data"]["children"][0]["data"]["author"];
-            String text = l["data"]["children"][0]["data"]["selftext"];
-            String tag = name;
-            String commentLink = l["data"]["children"][0]["data"]["permalink"];
-            String title = l["data"]["children"][0]["data"]["title"];
-            place = l["data"]["after"];
+            String imgLink = l["data"]["url"];
+            String author = l["data"]["author"];
+            String text = l["data"]["selftext"];
+            String commentLink = l["data"]["permalink"];
+            String title = l["data"]["title"];
+            String tag;
+            if(name=="popular")
+              tag = l["data"]["subreddit"].toLowerCase();
+            else tag = name;
+            
             listing = new Listing(
                 imgLink, author, text, tag, commentLink, title, source, place);
           } else {
@@ -109,8 +113,11 @@ class ListingQueue {
                 "error Loading",
                 "error loading");
           }
+          
           listingQ.addFirst(listing);
         }
+        place = responseJson["data"]["after"];
+        return true;
       } else if (source == "stakswipe") {
         var snapshot = Firestore.instance
             .collection('listings')
@@ -134,6 +141,7 @@ class ListingQueue {
           listingQ.add(new StakListing(
               link, author, text, name, comments, title, source, "", id));
         }
+        return true;
       }
     }
   }
@@ -149,10 +157,15 @@ class ListingList {
   List<ListingQueue> list;
   JsonDecoder decoder;
   JsonEncoder encoder;
+  int introCardIndex;
 
   ListingList() {
     decoder = new JsonDecoder();
     encoder = new JsonEncoder();
+    list = new List();
+    tagList = new TagList();
+    placeList = new PlaceList();
+    introCardIndex = 3;
     restore();
     for (Tag t in tagList.allTags) {
       list.add(new ListingQueue(
@@ -165,7 +178,12 @@ class ListingList {
 
   Listing getListing() {
     bool isEmpty;
+    if(introCardIndex<3){
+      return introCards()[introCardIndex];
+      introCardIndex++;
+    }
     do {
+      isEmpty = true;
       SourceName newTag = tagList.getTag();
       for (ListingQueue q in list) {
         if (q.name == newTag.name) {
@@ -178,7 +196,7 @@ class ListingList {
           Listing listing = q.take();
           q.updateTag(tagList.getPercent(newTag.name, newTag.source).ceil());
           placeList.setPlace(newTag.name, newTag.source, q.place);
-          break;
+          return listing;
         }
       }
     } while (isEmpty);
@@ -233,11 +251,7 @@ class ListingList {
     String tagJson = prefs.getString('taglist') ?? "0";
     String placeJson = prefs.getString('place') ?? "0";
     if (tagJson == "0") {
-      tagList = new TagList();
-      placeList = new PlaceList();
-      //setState(() {
-      //cardq = introCard();
-      //});
+      introCardIndex = 0;
       return;
     }
     //convert them to a map
@@ -246,11 +260,19 @@ class ListingList {
     //convert that map into the taglist and placelist
     tagList = new TagList.fromJson(tagmap);
     placeList = new PlaceList.fromJson(placemap);
-    /**cardq = new Queue();
-    setState(() {
-      cardq.add(newCard());
-      cardq.add(newCard());
-      cardq.add(newCard());
-    });**/
+    
+  }
+  Future<bool> update()async{
+    for(ListingQueue q in list){
+      await q.updateTag(tagList.getPercent(q.name, q.source).ceil());
+    }
+    return true;
+  }
+
+  List<Listing> introCards(){
+    List<Listing> introList = new List();
+    introList.add(new Listing("", "Michael", "StakSwipe is a media aggregation app to view all of you favorite content. Using the app is simple jusr right swipe stuff that you like or want to see more of and left swipe stuff hat you want to see less, try it out swipe away this card", "Intro", "", "Welcome to Stakswipe", "reddit", ""));
+    introList.add(new Listing("", "Michael", "Currently stakswipe takes from two sources reddit and its own server. If you want to Post to the stakswipe server press the button in the top right. You can also add or remove tags from your interests with the other two buttons to the left of the post button. In order to post You'll need a name swipe to see how to set that up", "Intro", "", "Other Features", "reddit", ""));
+    introList.add(new Listing("", "Michael", "In the upper left is a button to open up the sidebar. In there you can navigate to your posts, your list which contains all your interests as well as their percentages and you can create a name. Names are completely optionial in stakswipe, you only need one if you want to post content. Creating a name in stakswipe is easy, just pick a name and hit enter if its available you can hit submit. No password is required and the name is tied to your device so no one else can impersonate you. Now your ready to start swipe on this to start going through content.", "Intro","", "The sidebar", "reddit", ""));
   }
 }

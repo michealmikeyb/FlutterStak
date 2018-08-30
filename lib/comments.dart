@@ -61,6 +61,8 @@ class _CommentState extends State<Comment> {
       return FutureBuilder(
           future: fromUrl(),
           builder: (BuildContext context, AsyncSnapshot snapshot) {
+            if(!snapshot.hasData)
+            return Text("Loading Comments...");
             var list = snapshot.data; //get the list from the fromUrl method
             List<Widget> widgetList =
                 getComments(list, 0); //make a list of comments from it

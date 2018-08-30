@@ -4,6 +4,7 @@ import 'dart:async';
 import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'name.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 class PostingPage extends StatefulWidget {
   PostingPage({Key key, this.username}) : super(key: key);
@@ -16,6 +17,7 @@ class _PostingPageState extends State<PostingPage> {
   String title;
   String link;
   String tag;
+  String text;
   String sampleImg;
   final String stakServerUrl = "http://68.42.250.122/stakSwipe/postListing.php";
 
@@ -26,13 +28,20 @@ class _PostingPageState extends State<PostingPage> {
   }
 
   void Post() async {
-    var response = await http.post(stakServerUrl, body: {
-      "tag": tag,
-      "link": link,
-      "title": title,
-      "author": widget.username
-    });
-    print(response.body);
+    Firestore.instance.runTransaction((transaction) async {
+     await transaction
+         .set(Firestore.instance.collection("listings").document(), {
+       'title': title,
+       'text': text,
+       'link': link,
+       'tag': tag,
+       'score': 0,
+       'comments': "",
+       'author': widget.username,
+       'adjusted_score': 1
+     });
+   });
+
   }
 
   Widget build(BuildContext context) {
@@ -68,6 +77,14 @@ class _PostingPageState extends State<PostingPage> {
             onChanged: (text) {
               setState(() {
                 tag = text;
+              });
+            },
+          ),
+          Text("Text"),
+          new TextField(
+            onChanged: (enteredtext) {
+              setState(() {
+                text = text;
               });
             },
           ),

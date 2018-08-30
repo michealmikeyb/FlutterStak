@@ -18,7 +18,6 @@ import 'name.dart';
 import 'userPostsPage.dart';
 import 'comments.dart';
 import 'tagListPage.dart';
-import 'cardStack.dart';
 import 'dialogs.dart';
 import 'userShares.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -55,9 +54,6 @@ enum contentSource { reddit, stakswipe }
 class _MyHomePageState extends State<MyHomePage> {
   List<Widget> cardList; //the list of cards
   Queue<Widget> cardq;
-  TagList tagList; //the taglist holding the users likes and interest
-  PlaceList
-      placeList; //holds the place in each tag so the user can continually go through
   ListingList list;
   int index; //the index of the current card/ the number of card
   JsonEncoder encoder; //json encoder used for saving the taglist and placelist
@@ -68,6 +64,7 @@ class _MyHomePageState extends State<MyHomePage> {
   List<UserName> userNames;
   String currentUser = "none";
   bool checked = false;
+  CardStack stack;
 
   String currentTitle;
   String currentLink;
@@ -82,12 +79,9 @@ class _MyHomePageState extends State<MyHomePage> {
     names = new List(); //the usernames of the current user
     userNames = new List();
     getNames(); //gets the names of the user from memory
-    index = 0; //start the index
+   stack = new CardStack(list: new ListingList(),);
     super.initState();
-    tagList = new TagList(); //initialize the lists
-    placeList = new PlaceList();
-    restore(); //restore the lists if they are in the phones memory
-    //create three new cards
+    
 
     setState(() {});
   }
@@ -135,7 +129,7 @@ class _MyHomePageState extends State<MyHomePage> {
   void addTag(SourceName answer) {
     if (answer.name == "cancel") return;
     setState(() {
-      tagList.like(answer.name.toLowerCase(), answer.source);
+      stack.list.tagList.like(answer.name.toLowerCase(), answer.source);
     });
   }
 
@@ -154,7 +148,7 @@ class _MyHomePageState extends State<MyHomePage> {
    * from the taglist.
    */
   Future<Null> removeTagDialog() async {
-    tagList.removeTag(
+    stack.list.tagList.removeTag(
       await showDialog(context: context, child: new RemoveDialog()),
     );
   }
@@ -238,50 +232,7 @@ class _MyHomePageState extends State<MyHomePage> {
     }
   }
 
-  /**
-   * save the current taglist and placelist
-   * in the sharedpreferences as a json
-   */
-  void save() async {
-    var prefs =
-        await SharedPreferences.getInstance(); //get the shared preferences
-    //convert the taglist and placelist into jsons
-    String taglistJson = encoder.convert(tagList);
-    String placeJson = encoder.convert(placeList);
-    //store those string in the preferences
-    prefs.setString('place', placeJson);
-    prefs.setString('taglist', taglistJson);
-  }
-
-  /**
-   * restore the taglist and placelist from shared preferences 
-   */
-  void restore() async {
-    var prefs =
-        await SharedPreferences.getInstance(); //get the sharedpreferences
-    //get the tagjson and placejson strings, if they aren't there return
-    String tagJson = prefs.getString('taglist') ?? "0";
-    String placeJson = prefs.getString('place') ?? "0";
-    if (tagJson == "0") {
-      setState(() {
-        cardq = introCard();
-      });
-      return;
-    }
-    //convert them to a map
-    Map tagmap = decoder.convert(tagJson);
-    Map placemap = decoder.convert(placeJson);
-    //convert that map into the taglist and placelist
-    tagList = new TagList.fromJson(tagmap);
-    placeList = new PlaceList.fromJson(placemap);
-    list = new ListingList(tagList, placeList);
-    cardq = new Queue();
-    setState(() {
-      cardq.add(newCard());
-      cardq.add(newCard());
-      cardq.add(newCard());
-    });
-  }
+ 
 
   void share() async {
     String shareUrl =
@@ -289,421 +240,8 @@ class _MyHomePageState extends State<MyHomePage> {
     var response = await http.get(Uri.encodeFull(shareUrl));
     print(" url: $shareUrl response: ${response.body}");
   }
-
-  /**
-   * gets the json information for a tag based on its place, source and the name 
-   * of the tag
-   * @param tag the name of the tag
-   * @param place the place/ how far in the tag
-   * @param source where the tag comes from
-   */
-  Future<String> getData(
-    String tag,
-    String place,
-    String source,
-  ) async {
-    var response; //variable to store the response
-    if (source == "reddit") {
-      if (place == "not in") {
-        //if its not in gets the first one lin the list
-        response = await http.get(
-            Uri.encodeFull("https://www.reddit.com/r/$tag.json?limit=1;"),
-            headers: {"Accept": "applications/json"});
-      } else {
-        //else goes to the specified place in the tag
-        response = await http.get(
-            Uri.encodeFull(
-                "https://www.reddit.com/r/$tag.json?limit=1;after=$place;"),
-            headers: {"Accept": "applications/json"});
-      }
-
-      return response.body;
-    } else if (source == "stakswipe") {
-      if (place == "not in") {
-        response = await http.get(
-            Uri.encodeFull(
-                "http://$stakServerUrl/stakSwipe/getListing.php?tag=$tag&place=0;"),
-            headers: {"Accept": "applications/json"});
-      } else {
-        response = await http.get(
-            Uri.encodeFull(
-                "http://$stakServerUrl/stakSwipe/getListing.php?tag=$tag&place=$place;"),
-            headers: {"Accept": "applications/json"});
-      }
-      return response.body;
-    } else if (source == "stakuser") {
-      if (place == "not in") {
-        response = await http.get(
-            Uri.encodeFull(
-                "http://$stakServerUrl/stakSwipe/getUserListing.php?name=$tag&place=0;"),
-            headers: {"Accept": "applications/json"});
-      } else {
-        response = await http.get(
-            Uri.encodeFull(
-                "http://$stakServerUrl/stakSwipe/getUserListing.php?name=$tag&place=$place;"),
-            headers: {"Accept": "applications/json"});
-      }
-      return response.body;
-    }
-  }
-
-  /**data
-   * removes the top card from the stack and moves each of the other
-   * cards up one
-   */
-  void removeCard() {
-    save(); //save the placelist and taglist
-    cardq.removeLast();
-    while (cardq.length < 3) cardq.addFirst(newCard());
-
-    setState(() {});
-  }
-
-  Queue<Widget> introCard() {
-    Queue<Widget> queue = new Queue();
-    Widget card1 = new Container(
-      //the card widget
-      padding: EdgeInsets.all(20.0),
-      child: new Dismissible(
-        key: new Key("-1"),
-        child: new Card(
-          child: Column(
-            children: <Widget>[
-              Text(
-                "Welcome To StakSwipe",
-                style: new TextStyle(fontSize: 25.0, color: Colors.black),
-              ),
-              Text(
-                "StakSwipe is a media aggregation app to view all of you favorite content. Using the app is simple jusr right swipe stuff that you like or want to see more of and left swipe stuff hat you want to see less, try it out swipe away this card",
-                style: new TextStyle(fontSize: 15.0, color: Colors.black),
-              )
-            ],
-          ),
-        ),
-        onDismissed: (DismissDirection direction) {
-          removeCard();
-        },
-      ),
-    );
-    Widget card2 = new Container(
-        //the card widget
-        padding: EdgeInsets.all(20.0),
-        child: new Dismissible(
-          key: new Key("-2"),
-          child: new Card(
-            child: Column(
-              children: <Widget>[
-                Text(
-                  "Other Features",
-                  style: new TextStyle(fontSize: 25.0, color: Colors.black),
-                ),
-                Text(
-                  "Currently stakswipe takes from two sources reddit and its own server. If you want to Post to the stakswipe server press the button in the top right. You can also add or remove tags from your interests with the other two buttons to the left of the post button. In order to post You'll need a name swipe to see how to set that up",
-                  style: new TextStyle(fontSize: 15.0, color: Colors.black),
-                ),
-              ],
-            ),
-          ),
-          onDismissed: (DismissDirection direction) {
-            removeCard();
-          },
-        ));
-    Widget card3 = new Container(
-        //the card widget
-        padding: EdgeInsets.all(20.0),
-        child: new Dismissible(
-          key: new Key("-3"),
-          child: new Card(
-            child: Column(
-              children: <Widget>[
-                Text(
-                  "The sidebar",
-                  style: new TextStyle(fontSize: 25.0, color: Colors.black),
-                ),
-                Text(
-                  "In the upper left is a button to open up the sidebar. In there you can navigate to your posts, your list which contains all your interests as well as their percentages and you can create a name. Names are completely optionial in stakswipe, you only need one if you want to post content. Creating a name in stakswipe is easy, just pick a name and hit enter if its available you can hit submit. No password is required and the name is tied to your device so no one else can impersonate you. Now your ready to start swipe on this to start going through content.",
-                  style: new TextStyle(fontSize: 15.0, color: Colors.black),
-                )
-              ],
-            ),
-          ),
-          onDismissed: (DismissDirection direction) {
-            removeCard();
-          },
-        ));
-    queue.add(card3);
-    queue.add(card2);
-    queue.add(card1);
-    return queue;
-  }
-
-  /**
-   * creates a new card to add to the stack of cards
-   */
-  Widget newCard() {
-    //get the tag and source from the taglist then gets the place from the place list
-    SourceName tag = tagList.getTag();
-    print("tag: ${tag.name}");
-    bool isPopular = (tag.name == "popular");
-    String source = tag.source;
-    String name = tag.name;
-    String place = placeList.getPlace(tag.name, tag.source);
-
-    index++; //iterate the index
-    bool firstRender =
-        true; //checks if its first render, used to prevent a flashing bug
-    Key i = Key("$index");
-    int thisIndex = index;
-    if(source== "reddit"){
-    Listing listing = list.getListing();
-    return new Dismissible(
-      key: i,
-      onDismissed: (direction) {
-          removeCard();
-          switch (direction) {
-                  //checks which direction it went, if left it dislikes, if right it likes
-                  case DismissDirection.startToEnd:
-                  list.like(listing.tag);
-                  break;
-                  case DismissDirection.endToStart:
-                  list.dislike(listing.tag);
-                  break;
-          }
-      },
-      child: new ContentCard(listing: listing),
-    );
-    }
-    return new FutureBuilder(
-        future: getData(
-            name, place, source), //gets the json data from the getdata function
-        builder: (BuildContext context, AsyncSnapshot snapshot) {
-          var data =
-              decoder.convert(snapshot.data); //format the data into a map
-          String dataSource;
-          String title;
-          String url;
-          String sub;
-          String author;
-          String dataPlace;
-          String comments;
-          String text = "";
-          String sharedBy = "";
-          if (data["data"] != null) {
-            dataSource = "reddit";
-            var listing = data["data"]["children"];
-            if (listing.length > 0) {
-              //get all the data from the map and assign it to variables
-              title = data["data"]["children"][0]["data"]["title"];
-              url = data["data"]["children"][0]["data"]["url"];
-              sub = data["data"]["children"][0]["data"]["subreddit"];
-              author = data["data"]["children"][0]["data"]["author"];
-              dataPlace = data["data"]["after"];
-              text = data["data"]["children"][0]["data"]["selftext"];
-              comments = data["data"]["children"][0]["data"]["permalink"];
-            } else{
-              index--;
-              return newCard();
-            }
-          } else {
-            dataSource = data['gotten_by'];
-            title = data['title'];
-            url = data['link'];
-            sub = data['tag'];
-            author = data['author'];
-            dataPlace = data['place'];
-            if(source == "stakuser" && author != data['name'])
-              sharedBy= "Shared by: ${data['name']}";
-          }
-         
-          if (isPopular) placeList.setPlace("popular", source, dataPlace); //sets the place for the tag and the popular if it is popular
-          placeList.setPlace(sub, source, dataPlace);
-          print(dataPlace);
-          //prevents a bug where the top card is rendered briefly after it has been dismissed
-          if ((index - thisIndex) == 2) {
-            //if it it the top card
-            currentAuthor = author;
-            currentCommentLink = comments;
-            currentLink = url;
-            currentSelfText = text;
-            currentTitle = title;
-            currentTag = sub;
-            if ((index - thisIndex >= 2)) {
-              if (firstRender) {
-                //and it is the first time its been rendered this time around
-                firstRender = false; //set first render back to false
-                return new Text(
-                    ""); //return a blank text so that nothing shows up instead of the card
-              } else
-                firstRender = true;
-            }
-          }
-          return new Container(
-            //the card widget
-            padding: EdgeInsets.all(20.0),
-            child: new Dismissible(
-              //it is a dismissible which allows for easily handling the animation
-              key: i,
-              onDismissed: (direction) {
-                switch (direction) {
-                  //checks which direction it went, if left it dislikes, if right it likes
-                  case DismissDirection.startToEnd:
-                    if (dataSource == "user")
-                      tagList.like(data['name'], "stakuser");
-                    else
-                      tagList.like(sub.toLowerCase(), dataSource);
-                    if (source == "stakuser" || source == "stakswipe")
-                      http.post("http://$stakServerUrl/stakSwipe/like.php",
-                          body: {'id': data["id"]});
-                    break;
-                  case DismissDirection.endToStart:
-                    if (dataSource == "user")
-                      tagList.dislike(data['name'], "stakuser");
-                    else
-                      tagList.dislike(sub.toLowerCase(), dataSource);
-                    if (source == "stakuser" || source == "stakswipe")
-                      http.post("http://$stakServerUrl/stakSwipe/dislike.php",
-                          body: {'id': data["id"]});
-                    break;
-                  default:
-                    break;
-                }
-                removeCard(); //remove the top card
-              },
-              child: Card(
-                //the card
-                elevation: 50.0,
-                child: new ListView(
-                  children: <Widget>[
-                    new Text(
-                      "Posted on: $sub \n By: $author", //where it came from
-                      style: new TextStyle(fontSize: 15.0, color: Colors.grey),
-                      textAlign: TextAlign.left,
-                    ),
-                    new Text(sharedBy),
-                    new Text(
-                      //the title
-                      title,
-                      style: new TextStyle(fontSize: 25.0, color: Colors.black),
-                    ),
-                    new Image.network(url), //the corresponding picture
-                    new Text("$text \nComments:"),
-                    new Comment(
-                      url: "https://www.reddit.com$comments.json",
-                    )
-                  ],
-                ),
-              ),
-            ),
-          );
-        });
-        /** 
-        else{
-          return new StreamBuilder(
-            stream: Firestore.instance.collection('listings').orderBy('adjusted_score').where('tag', isEqualTo: tag).snapshots(),
-            builder:(BuildContext context, AsyncSnapshot<QuerySnapshot> snapshot){
-              if(!snapshot.hasData) return CircularProgressIndicator();
-              int numPlace = int.parse(place);
-              var data = snapshot.data.documents[numPlace];
-              String title = data['title'];
-              String author = data['author'];
-              String link = data['link'];
-              String text = data['text'];
-              String comments = data['comments'];
-              placeList.setPlace(tag.name, source, "${numPlace++}");
-
-               if ((index - thisIndex) == 2) {
-            //if it it the top card
-            currentAuthor = author;
-            currentCommentLink = comments;
-            currentLink = link;
-            currentSelfText = text;
-            currentTitle = title;
-            currentTag = tag.name;
-            if ((index - thisIndex >= 2)) {
-              if (firstRender) {
-                //and it is the first time its been rendered this time around
-                firstRender = false; //set first render back to false
-                return new Text(
-                    ""); //return a blank text so that nothing shows up instead of the card
-              } else
-                firstRender = true;
-            }
-          }
-          return new Container(
-            //the card widget
-            padding: EdgeInsets.all(20.0),
-            child: new Dismissible(
-              //it is a dismissible which allows for easily handling the animation
-              key: i,
-              onDismissed: (direction) {
-                switch (direction) {
-                  //checks which direction it went, if left it dislikes, if right it likes
-                  case DismissDirection.startToEnd:
-                    if (source == "stakuser")
-                      tagList.like(data['author'], "stakuser");
-                    else
-                      tagList.like(tag.name.toLowerCase(), source);
-                    if (source == "stakuser" || source == "stakswipe")
-                      Firestore.instance.runTransaction((transaction) async{
-                         var freshSnap = await transaction.get(data.reference);
-                         await transaction.update(freshSnap.reference, {
-                           'score': freshSnap.data['score']++
-                         });
-                         });
-                    break;
-                  case DismissDirection.endToStart:
-                    if (source == "user")
-                      tagList.dislike(data['author'], "stakuser");
-                    else
-                      tagList.dislike(tag.name.toLowerCase(), source);
-                    if (source == "stakuser" || source == "stakswipe")
-                      Firestore.instance.runTransaction((transaction) async{
-                         var freshSnap = await transaction.get(data.reference);
-                         await transaction.update(freshSnap.reference, {
-                           'score': freshSnap.data['score']--
-                         });
-                         });
-                    break;
-                  default:
-                    break;
-                }
-                removeCard(); //remove the top card
-              },
-              child: Card(
-                //the card
-                elevation: 50.0,
-                child: new ListView(
-                  children: <Widget>[
-                    new Text(
-                      "Posted on: $sub \n By: $author", //where it came from
-                      style: new TextStyle(fontSize: 15.0, color: Colors.grey),
-                      textAlign: TextAlign.left,
-                    ),
-                    new Text(sharedBy),
-                    new Text(
-                      //the title
-                      title,
-                      style: new TextStyle(fontSize: 25.0, color: Colors.black),
-                    ),
-                    new Image.network(url), //the corresponding picture
-                    new Text("$text \nComments:"),
-                    new Comment(
-                      url: "https://www.reddit.com$comments.json",
-                    )
-                  ],
-                ),
-              ),
-            ),
-          );
-
-            }
-          );
-        }**/
-  }
-
   @override
   Widget build(BuildContext context) {
-    cardList = cardq.toList(); //makes the three cards into a list
     return new Scaffold(
       appBar: new AppBar(
         title: new Text(widget.title),
@@ -781,7 +319,7 @@ class _MyHomePageState extends State<MyHomePage> {
                 Navigator.push(
                     context,
                     MaterialPageRoute(
-                        builder: (context) => TagPage(list: tagList)));
+                        builder: (context) => TagPage(list: stack.list.tagList)));
               },
             ),
             new Divider(),
@@ -803,9 +341,7 @@ class _MyHomePageState extends State<MyHomePage> {
         ),
       ),
       body: new Center(
-          child: Stack(
-        children: cardList,
-      )),
+          child: stack),
     );
   }
 }

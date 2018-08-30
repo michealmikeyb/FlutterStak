@@ -39,8 +39,8 @@ class ContentCard extends StatelessWidget{
 }
 
 class CardStack extends StatefulWidget{
-  CardStack({Key key }):super(key: key);
-
+  CardStack({Key key, this.list }):super(key: key);
+  ListingList list;
   _CardStackState createState() => _CardStackState();
 }
 
@@ -50,24 +50,28 @@ class _CardStackState extends State<CardStack>{
   int stackSize;
   int index;
 
-  void initState(){
-    list = new ListingList();
+  void initState() {
+    cardQ = new Queue();
+    
+    list = widget.list;
     stackSize = 3;
     index = 0;
+    
     fillQ();
   }
 
   void removeCard(){
     setState((){
-    cardQ.removeFirst();
+    cardQ.removeLast();
     fillQ();
     });
   }
 
-  void fillQ(){
+  void fillQ() async{
+    await list.update();
     while(cardQ.length<=stackSize){
       Listing newListing = list.getListing();
-      cardQ.add(new Dismissible(
+      cardQ.addFirst(new Dismissible(
         key: new Key("$index"),
         onDismissed:(direction){
           removeCard();
@@ -84,7 +88,9 @@ class _CardStackState extends State<CardStack>{
         } ,
         child: new ContentCard(listing: newListing),
       ));
+      index++;
     }
+    
     setState(() {
           
         });
@@ -92,6 +98,9 @@ class _CardStackState extends State<CardStack>{
 
  
   Widget build(BuildContext context){
-    return new Stack(children: cardQ.toList());
+    List<Widget> cardList = cardQ.toList(); 
+    if(cardQ == null || cardQ.isEmpty)
+      return new ContentCard(listing: new Listing("https://i.imgur.com/yFW1GdD.png", "", "welcome to StakSwipe", "", "", "Loading", "", ""));
+    return new Stack(children: cardList);
   }
 }

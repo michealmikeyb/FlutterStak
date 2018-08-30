@@ -8,7 +8,7 @@ void main(){
     JsonEncoder encoder = new JsonEncoder();
     JsonDecoder decoder = new JsonDecoder();
     TagList before = new TagList();
-    before.like("test");
+    before.like("test", "test");
     String tagJson = encoder.convert(before);
     Map afterMap = decoder.convert(tagJson);
     TagList after = TagList.fromJson(afterMap);

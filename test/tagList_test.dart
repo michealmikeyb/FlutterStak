@@ -9,7 +9,7 @@ void main() {
   
   test('test first like', (){
     TagList t = new TagList();
-    t.like("testTag");
+    t.like("testTag", "test");
     expect(t.getPercent("testTag", "reddit"), 5.0, );  
   });
 
