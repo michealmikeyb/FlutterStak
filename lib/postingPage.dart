@@ -1,10 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+import 'dart:io';
 import 'dart:async';
 import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'name.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_storage/firebase_storage.dart';
 
 class PostingPage extends StatefulWidget {
   PostingPage({Key key, this.username}) : super(key: key);
@@ -44,6 +48,14 @@ class _PostingPageState extends State<PostingPage> {
 
   }
 
+  Future<String> _pickSaveImage(String imageId) async {
+    File imageFile = await ImagePicker.pickImage(source: ImageSource.gallery);
+    StorageReference ref =
+    FirebaseStorage.instance.ref().child("images").child("$title.jpg");
+    StorageUploadTask uploadTask = ref.putFile(imageFile);
+  return (await uploadTask.future).downloadUrl.toString();
+}
+
   Widget build(BuildContext context) {
     return new Scaffold(
       appBar: AppBar(
@@ -51,16 +63,28 @@ class _PostingPageState extends State<PostingPage> {
       ),
       body: ListView(
         children: <Widget>[
-          new Text("Title"),
           new TextField(
+            decoration: InputDecoration(
+              labelText: "Title"
+            ),
             onChanged: (text) {
               setState(() {
                 title = text;
               });
             },
           ),
-          Text("Link"),
+          Row(children:<Widget>[ 
+            RaisedButton(
+              child: Text("Pick a picture from your phone"),
+              onPressed: ()async{
+                link = await _pickSaveImage("newImage");
+                setState(() { });
+                sampleImg = link;
+              },),]),
           new TextField(
+            decoration: InputDecoration(
+              labelText: "Image Link"
+            ),
             onChanged: (text) {
               setState(() {
                 link = text;
@@ -72,19 +96,23 @@ class _PostingPageState extends State<PostingPage> {
               });
             },
           ),
-          Text("Tag"),
           new TextField(
+            decoration: InputDecoration(
+              labelText: "Tag"
+            ),
             onChanged: (text) {
               setState(() {
                 tag = text;
               });
             },
           ),
-          Text("Text"),
           new TextField(
+            decoration: InputDecoration(
+              labelText: "Text"
+            ),
             onChanged: (enteredtext) {
               setState(() {
-                text = text;
+                text = enteredtext;
               });
             },
           ),

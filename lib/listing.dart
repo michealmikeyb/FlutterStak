@@ -63,14 +63,14 @@ class ListingQueue {
   JsonDecoder decoder;
   String place;
 
-  ListingQueue(this.name, int percent, this.place, this.source) {
+  ListingQueue(this.name, this.place, this.source) {
     decoder = new JsonDecoder();
     listingQ = new Queue();
   }
   
   Future<bool> updateTag(int percent) async {
     if (listingQ.length < percent / 2 && listingQ.length <= 5) {
-      int numToAdd = min(percent-listingQ.length, percent-10);
+      int numToAdd = min(percent-listingQ.length, 5);
       if (source == "reddit") {
         var response;
         if (place == "not in") {
@@ -170,7 +170,6 @@ class ListingList {
     for (Tag t in tagList.allTags) {
       list.add(new ListingQueue(
           t.name,
-          tagList.getPercent(t.name, t.type).ceil(),
           placeList.getPlace(t.name, t.type),
           t.type));
     }
@@ -263,8 +262,24 @@ class ListingList {
     
   }
   Future<bool> update()async{
-    for(ListingQueue q in list){
-      await q.updateTag(tagList.getPercent(q.name, q.source).ceil());
+    for(Tag t in tagList.allTags){
+      bool found = false;
+      for(ListingQueue l in list){
+        if(l.name == t.name && l.source == t.type){
+          await l.updateTag(tagList.getPercent(t.name, t.type).ceil());
+          found = true;
+          break;
+        }
+      }
+      if(!found){
+        ListingQueue newQ = new ListingQueue(
+          t.name,
+          placeList.getPlace(t.name, t.type),
+          t.type);
+        await newQ.updateTag(tagList.getPercent(t.name, t.type).ceil());
+        list.add(newQ);
+
+      }
     }
     return true;
   }
