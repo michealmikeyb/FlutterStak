@@ -3,6 +3,7 @@ import 'package:http/http.dart' as http;
 import 'dart:async';
 import 'dart:convert';
 import 'package:json_annotation/json_annotation.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 class SharesPage extends StatefulWidget {
   SharesPage({Key key, this.username}) : super(key: key);
@@ -33,21 +34,28 @@ class _SharesPageState extends State<SharesPage> {
         title: Text("$name's Shares"),
       ),
       body: new Center(
-        child: new FutureBuilder(
-          future: getData(),
+        child: new StreamBuilder(
+          stream: Firestore.instance.collection("listings").where("shared_by", isEqualTo: name).snapshots(),
           builder: (BuildContext context, AsyncSnapshot snapshot) {
-            var data = decoder.convert(snapshot.data);
+            if(!snapshot.hasData)
+              return CircularProgressIndicator();
+            var data = snapshot.data.documents;
             return new ListView.builder(
+              itemCount: data.length,
               itemBuilder: (BuildContext context, int index) {
-                if(index>=data.length)
-                return Text("");
+                print(data[index].data["link"]);
                 return new Card(
                   child: Column(
                     children: <Widget>[
-                      Text("Posted on: ${data[index]["tag"]}"),
-                      Text("Score: ${data[index]["score"]}"),
-                      Text(data[index]["title"], style: new TextStyle(fontSize: 25.0, color: Colors.black),),
-                      Image.network(data[index]["link"]),
+                      new Text(
+                      "Posted on: ${data[index].data["tag"]} \n By: ${data[index].data["author"]}", //where it came from
+                      style: new TextStyle(fontSize: 15.0, color: Colors.grey),
+                      textAlign: TextAlign.left,
+                    ),
+                      Text("Score: ${data[index].data["score"]}"),
+                      Text(data[index].data["title"], style: new TextStyle(fontSize: 25.0, color: Colors.black),),
+                      Image.network(data[index].data["link"]),
+                      Text(data[index].data["text"]??""),
                     ],
                   ),
                 );

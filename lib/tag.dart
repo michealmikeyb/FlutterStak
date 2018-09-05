@@ -78,7 +78,7 @@ class Tag {
   List<int> takeNumbers(int i) {
     int numberOfPlaces =
         rating; //the maximum number of places that can be taken
-    List<int> removed = new List(i); //the list to store the new numbers
+    List<int> removed = new List(min(numberOfPlaces, i)); //the list to store the new numbers
     if (i < numberOfPlaces) {
       //if it can take the amount take them and adjust the rating
       for (int j = i; j > 0; j--) {
@@ -304,20 +304,19 @@ class TagList {
     }
     //if numbers are available to add
     SourceName theTag = new SourceName(tag, source);
-    if (def.def > 0) {
+    print("before: ${def.def}");
       if (raise < def.def) {//if it can give the amount given by raise, have the deficit give the numbers then add them to the tag
         List<int> numbers = def.give(raise);
         allTags[allTagsPlace].addNumbers(numbers, alreadyIn);
         for (int i in numbers) {
           list[i] = theTag;
         }
-      } else {//otherwise just add all the deficit
-        int newRaise = def.def;
-        List<int> numbers = def.give(newRaise);
+      } else {//otherwise do a dilution before giving the numbers
+        dilution(raise-def.def);
+        List<int> numbers = def.give(raise);
         allTags[allTagsPlace].addNumbers(numbers, alreadyIn);
         for (int i in numbers) {
           list[i] = theTag;
-        }
       }
     }
   }
@@ -347,7 +346,7 @@ class TagList {
       if (allTags[allTagsPlace].isNegative())//if its negative there are no numbers to take
         return;
       else {//otherwise it has numbers that can be taken
-        if (def.def + deficit < 10000) {//se if adding to it will send it over 10000
+        if (def.def + deficit < 8000) {//se if adding to it will send it over 10000
           List<int> nums = allTags[allTagsPlace].takeNumbers(deficit);
           def.take(nums);
         } else {
@@ -400,6 +399,18 @@ class TagList {
       if(t.name == tag)
         allTags.remove(t);
     }
+  }
+
+  void dilution(int size){
+    print("before: ${def.def}");
+    for(Tag t in allTags){
+      double percent = getPercent(t.name, t.type);
+      if(percent >0 && t.name!="popular"){
+        List<int> nums = t.takeNumbers((percent*125*(size/10000)).round());
+        def.take(nums);
+      }
+    }
+    print("after: ${def.def}");
   }
   /**
    * gets the percent a certain tag posses in the list

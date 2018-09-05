@@ -41,18 +41,20 @@ class ContentCard extends StatelessWidget{
 class CardStack extends StatefulWidget{
   CardStack({Key key, this.list }):super(key: key);
   ListingList list;
+  Listing topListing;
   _CardStackState createState() => _CardStackState();
 }
 
 class _CardStackState extends State<CardStack>{
   Queue<Widget> cardQ;
+  Queue<Listing> listingQ;
   ListingList list;
   int stackSize;
   int index;
 
   void initState() {
     cardQ = new Queue();
-    
+    listingQ = new Queue();
     list = widget.list;
     stackSize = 3;
     index = 0;
@@ -60,21 +62,24 @@ class _CardStackState extends State<CardStack>{
     fillQ();
   }
 
-  void removeCard(){
-    setState((){
+  Future<bool> removeCard() async{
+    listingQ.removeLast();
     cardQ.removeLast();
-    fillQ();
-    });
+    await fillQ();
+    setState(() {});
+    widget.topListing = listingQ.last;
+    return true;
   }
 
-  void fillQ() async{
+  Future<bool> fillQ() async{
     await list.update();
     while(cardQ.length<=stackSize){
       Listing newListing = list.getListing();
+      listingQ.addFirst(newListing);
       cardQ.addFirst(new Dismissible(
         key: new Key("$index"),
-        onDismissed:(direction){
-          removeCard();
+        onDismissed:(direction)async{
+          await removeCard();
           switch (direction) {
             case DismissDirection.startToEnd:
             list.like(tag: new SourceName(newListing.tag, newListing.source),id: newListing.id);
@@ -94,6 +99,7 @@ class _CardStackState extends State<CardStack>{
     setState(() {
           
         });
+        return true;
   }
 
  

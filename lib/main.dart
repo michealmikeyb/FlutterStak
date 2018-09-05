@@ -79,9 +79,10 @@ class _MyHomePageState extends State<MyHomePage> {
     names = new List(); //the usernames of the current user
     userNames = new List();
     getNames(); //gets the names of the user from memory
-   stack = new CardStack(list: new ListingList(),);
+    stack = new CardStack(
+      list: new ListingList(),
+    );
     super.initState();
-    
 
     setState(() {});
   }
@@ -117,10 +118,14 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 
   Future<bool> login(String name, int number) async {
-    var response = await http.get(
-        "http://$stakServerUrl/stakSwipe/login.php?name=$name&number=$number");
-    print(response.body);
-    return response.body == "true";
+    var response = await Firestore.instance
+        .collection("users")
+        .where("name", isEqualTo: name)
+        .getDocuments();
+    if (!response.documents.isEmpty)
+      return response.documents[0]["number"] == number;
+    else
+      return false;
   }
 
   /**
@@ -170,7 +175,7 @@ class _MyHomePageState extends State<MyHomePage> {
               onSubmitted: (text) {
                 setState(() {
                   addName(
-                      text); //check the name to see if it is available, add it if it is
+                      text.toLowerCase()); //check the name to see if it is available, add it if it is
                 });
               },
             ),
@@ -204,9 +209,12 @@ class _MyHomePageState extends State<MyHomePage> {
    */
   Future<bool> checkName(String name) async {
     //checks the name from the database
-    var response = await http
-        .get("http://$stakServerUrl/stakSwipe/checkName.php?name=$name");
-    return response.body == "available";
+    var response = await Firestore.instance
+        .collection("users")
+        .where(name, isEqualTo: name.toLowerCase())
+        .getDocuments();
+    print(response.documents.isEmpty);
+    return response.documents.isEmpty;
   }
 
   /**
@@ -217,13 +225,14 @@ class _MyHomePageState extends State<MyHomePage> {
   void addName(String name) async {
     checked = await checkName(name); //check the name
     if (checked) {
-      UserName newUser = new UserName(name); //create a new username
-      names.add(name); //add it to the string list of names
+      UserName newUser = new UserName(name.toLowerCase()); //create a new username
+      names.add(name.toLowerCase()); //add it to the string list of names
       userNames.add(newUser); //add it to the username list
-      var response = await http.post(
-          //post it to the server
-          "http://$stakServerUrl/stakSwipe/newUser.php",
-          body: {'name': name, 'number': "${newUser.id}"});
+      Firestore.instance.runTransaction((transaction) async {
+        await transaction.set(
+            Firestore.instance.collection("users").document(),
+            {"name": name.toLowerCase(), "number": newUser.id});
+      });
       currentUser = name; //set the current user to the one that was just added
       var prefs =
           await SharedPreferences.getInstance(); //get the shared preferences
@@ -232,14 +241,44 @@ class _MyHomePageState extends State<MyHomePage> {
     }
   }
 
- 
-
   void share() async {
-    String shareUrl =
-        "http://$stakServerUrl/stakSwipe/share.php?tag=$currentTag&name=$currentUser&title= $currentTitle&author=$currentAuthor&link=$currentLink&comentLink=$currentCommentLink&selfText=$currentSelfText";
-    var response = await http.get(Uri.encodeFull(shareUrl));
-    print(" url: $shareUrl response: ${response.body}");
+    Firestore.instance.runTransaction((transaction) async {
+      await transaction
+          .set(Firestore.instance.collection("listings").document(), {
+        'title': stack.topListing.title,
+        'text': stack.topListing.text,
+        'link': stack.topListing.imgLink,
+        'tag': stack.topListing.tag,
+        'score': 0,
+        'comments': stack.topListing.commentLink,
+        'author': stack.topListing.author,
+        'adjusted_score': 1,
+        "shared_by": currentUser,
+       'date_posted': DateTime.now(),
+      });
+    });
   }
+
+  /**void share() async {
+    Firestore.instance.runTransaction((transaction) async {
+     await transaction
+         .set(Firestore.instance.collection("listings").document(), {
+       'title': stack.topListing.title,
+       'text': stack.topListing.text,
+       'link': stack.topListing.imgLink,
+       'tag': stack.topListing.tag,
+       'score': 0,
+       'comments': stack.topListing.commentLink,
+       'author': stack.topListing..author,
+       'adjusted_score': 1,
+       "shared_by": currentUser,
+     });
+   });
+    /**String shareUrl =
+        "http://$stakServerUrl/stakSwipe/share.php?tag=${stack.topListing.tag}&name=$currentUser&title= ${stack.topListing.title}&author=${stack.topListing.author}&link=${stack.topListing.imgLink}&comentLink=${stack.topListing.commentLink}&selfText=${stack.topListing.text}";
+    var response = await http.get(Uri.encodeFull(shareUrl));
+    print(" url: $shareUrl response: ${response.body}");**/
+}**/
   @override
   Widget build(BuildContext context) {
     return new Scaffold(
@@ -319,7 +358,8 @@ class _MyHomePageState extends State<MyHomePage> {
                 Navigator.push(
                     context,
                     MaterialPageRoute(
-                        builder: (context) => TagPage(list: stack.list.tagList)));
+                        builder: (context) =>
+                            TagPage(list: stack.list.tagList)));
               },
             ),
             new Divider(),
@@ -340,8 +380,7 @@ class _MyHomePageState extends State<MyHomePage> {
           ],
         ),
       ),
-      body: new Center(
-          child: stack),
+      body: new Center(child: stack),
     );
   }
 }

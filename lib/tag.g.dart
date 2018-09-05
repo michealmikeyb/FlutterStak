@@ -6,13 +6,14 @@ part of 'tag.dart';
 // JsonSerializableGenerator
 // **************************************************************************
 
-Tag _$TagFromJson(Map<String, dynamic> json) =>
-    new Tag(json['name'] as String, json['type'] as String)
-      ..rating = json['rating'] as int
-      ..likeMultiplier = json['likeMultiplier'] as int
-      ..dislikeMultiplier = json['dislikeMultiplier'] as int
-      ..listIndexes =
-          (json['listIndexes'] as List)?.map((e) => e as int)?.toList();
+Tag _$TagFromJson(Map<String, dynamic> json) {
+  return new Tag(json['name'] as String, json['type'] as String)
+    ..rating = json['rating'] as int
+    ..likeMultiplier = json['likeMultiplier'] as int
+    ..dislikeMultiplier = json['dislikeMultiplier'] as int
+    ..listIndexes =
+        (json['listIndexes'] as List)?.map((e) => e as int)?.toList();
+}
 
 abstract class _$TagSerializerMixin {
   int get rating;
@@ -31,8 +32,9 @@ abstract class _$TagSerializerMixin {
       };
 }
 
-SourceName _$SourceNameFromJson(Map<String, dynamic> json) =>
-    new SourceName(json['name'] as String, json['source'] as String);
+SourceName _$SourceNameFromJson(Map<String, dynamic> json) {
+  return new SourceName(json['name'] as String, json['source'] as String);
+}
 
 abstract class _$SourceNameSerializerMixin {
   String get source;
@@ -41,9 +43,10 @@ abstract class _$SourceNameSerializerMixin {
       <String, dynamic>{'source': source, 'name': name};
 }
 
-Deficit _$DeficitFromJson(Map<String, dynamic> json) => new Deficit(
-    json['def'] as int,
-    (json['places'] as List)?.map((e) => e as int)?.toList());
+Deficit _$DeficitFromJson(Map<String, dynamic> json) {
+  return new Deficit(json['def'] as int,
+      (json['places'] as List)?.map((e) => e as int)?.toList());
+}
 
 abstract class _$DeficitSerializerMixin {
   int get def;
@@ -52,23 +55,34 @@ abstract class _$DeficitSerializerMixin {
       <String, dynamic>{'def': def, 'places': places};
 }
 
-TagList _$TagListFromJson(Map<String, dynamic> json) => new TagList()
-  ..list = (json['list'] as List)
-      ?.map((e) =>
-          e == null ? null : new SourceName.fromJson(e as Map<String, dynamic>))
-      ?.toList()
-  ..allTags = (json['allTags'] as List)
-      ?.map(
-          (e) => e == null ? null : new Tag.fromJson(e as Map<String, dynamic>))
-      ?.toList()
-  ..def = json['def'] == null
-      ? null
-      : new Deficit.fromJson(json['def'] as Map<String, dynamic>);
+TagList _$TagListFromJson(Map<String, dynamic> json) {
+  return new TagList()
+    ..list = (json['list'] as List)
+        ?.map((e) => e == null
+            ? null
+            : new SourceName.fromJson(e as Map<String, dynamic>))
+        ?.toList()
+    ..allTags = (json['allTags'] as List)
+        ?.map((e) =>
+            e == null ? null : new Tag.fromJson(e as Map<String, dynamic>))
+        ?.toList()
+    ..def = json['def'] == null
+        ? null
+        : new Deficit.fromJson(json['def'] as Map<String, dynamic>)
+    ..lastTag = json['lastTag'] == null
+        ? null
+        : new SourceName.fromJson(json['lastTag'] as Map<String, dynamic>);
+}
 
 abstract class _$TagListSerializerMixin {
   List<SourceName> get list;
   List<Tag> get allTags;
   Deficit get def;
-  Map<String, dynamic> toJson() =>
-      <String, dynamic>{'list': list, 'allTags': allTags, 'def': def};
+  SourceName get lastTag;
+  Map<String, dynamic> toJson() => <String, dynamic>{
+        'list': list,
+        'allTags': allTags,
+        'def': def,
+        'lastTag': lastTag
+      };
 }

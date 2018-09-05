@@ -6,8 +6,9 @@ part of 'name.dart';
 // JsonSerializableGenerator
 // **************************************************************************
 
-UserName _$UserNameFromJson(Map<String, dynamic> json) =>
-    new UserName(json['name'] as String)..id = json['id'] as int;
+UserName _$UserNameFromJson(Map<String, dynamic> json) {
+  return new UserName(json['name'] as String)..id = json['id'] as int;
+}
 
 abstract class _$UserNameSerializerMixin {
   String get name;

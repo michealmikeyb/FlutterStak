@@ -42,7 +42,8 @@ class _PostingPageState extends State<PostingPage> {
        'score': 0,
        'comments': "",
        'author': widget.username,
-       'adjusted_score': 1
+       'adjusted_score': 1,
+       'date_posted': DateTime.now(),
      });
    });
 
@@ -116,7 +117,7 @@ class _PostingPageState extends State<PostingPage> {
               });
             },
           ),
-          FlatButton(
+          RaisedButton(
             child: Text("Submit"),
             onPressed: () {
               print(

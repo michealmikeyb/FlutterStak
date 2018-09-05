@@ -13,8 +13,10 @@ part 'placeList.g.dart';
 @JsonSerializable()
 class PlaceList {
   List<PlaceHolder> list;
+  DateTime lastReset;
   PlaceList() {
     list = new List();
+    lastReset = DateTime.now();
   }
   /**
    * looks through the list to see if it has a place
@@ -23,11 +25,15 @@ class PlaceList {
    * @param source the source of the tat that is being seached for
    */
   String getPlace(String tag, String source) {
+    checkReset();
     for (PlaceHolder p in list) {
       if (p.name == tag && p.source == source) return p.place;
     }
     list.add(new PlaceHolder(tag, "not in", source));
+    if(source == "reddit")
     return "not in";
+    else
+    return "100000000";
   }
   /**
    * sets the place of the specified tag
@@ -41,6 +47,12 @@ class PlaceList {
       p.place = place;
     }
   }
+
+  void checkReset(){
+    if(lastReset.difference(DateTime.now()).inHours>8)
+    list = new List();
+    lastReset = DateTime.now();
+  }
   /**
    * tostring function giving the places and names of each tag in the list
    */
@@ -52,7 +64,8 @@ class PlaceList {
   }
   //used in storing the placelist as a json
   Map<String, dynamic> toJson()=>{
-  'list':list
+  'list':list,
+  'lastReset':lastReset?.toIso8601String()
   };
   //used in restoring the list from a json
   factory PlaceList.fromJson(Map<String, dynamic> json)=> _$PlaceListFromJson(json);

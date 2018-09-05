@@ -6,11 +6,10 @@ part of 'userPostsPage.dart';
 // JsonSerializableGenerator
 // **************************************************************************
 
-Post _$PostFromJson(Map<String, dynamic> json) => new Post(
-    json['title'] as String,
-    json['score'] as String,
-    json['link'] as String,
-    json['tag'] as String);
+Post _$PostFromJson(Map<String, dynamic> json) {
+  return new Post(json['title'] as String, json['score'] as String,
+      json['link'] as String, json['tag'] as String);
+}
 
 abstract class _$PostSerializerMixin {
   String get title;
