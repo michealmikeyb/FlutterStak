@@ -373,8 +373,9 @@ class _MyHomePageState extends State<MyHomePage> {
             new ListTile(
               title: Text("New Name"),
               trailing: Icon(Icons.add),
-              onTap: () {
-                createAccountDialog();
+              onTap: () async{
+                userNames = await showDialog(context: context, child: new AccountDialog(userNames: userNames,));
+                currentUser = userNames[userNames.length-1].name;
               },
             ),
           ],

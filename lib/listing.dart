@@ -167,8 +167,16 @@ class ListingQueue {
       }
       else if(source == "stakuser"){
         //get both author and shared_by streams from the server
-        var authorSnapshot = await Firestore.instance.collection("listings").orderBy("adjusted_score").where("author", isEqualTo: name).limit(numToAdd).where("adjusted_score", isLessThanOrEqualTo:  int.parse(place)).getDocuments();
-        var sharedSnapshot = await Firestore.instance.collection("listings").orderBy("adjusted_score").where("shared_by", isEqualTo: name).limit(numToAdd).where("adjusted_score", isLessThanOrEqualTo:  int.parse(place)).getDocuments();
+        var authorSnapshot;
+        var sharedSnapshot;
+        if(place == "not in"){
+       authorSnapshot = await Firestore.instance.collection("listings").orderBy("adjusted_score").where("author", isEqualTo: name).limit(numToAdd).getDocuments();
+        sharedSnapshot = await Firestore.instance.collection("listings").orderBy("adjusted_score").where("shared_by", isEqualTo: name).limit(numToAdd).getDocuments();
+      }
+      else{
+        authorSnapshot = await Firestore.instance.collection("listings").orderBy("adjusted_score").where("author", isEqualTo: name).limit(numToAdd).where("adjusted_score", isLessThanOrEqualTo:  int.parse(place)).getDocuments();
+        sharedSnapshot = await Firestore.instance.collection("listings").orderBy("adjusted_score").where("shared_by", isEqualTo: name).limit(numToAdd).where("adjusted_score", isLessThanOrEqualTo:  int.parse(place)).getDocuments();
+      }
         var data = List();
         List authorList= authorSnapshot.documents;
         List sharedList = sharedSnapshot.documents;
@@ -201,10 +209,11 @@ class ListingQueue {
           String link = l.data['link'];
           String text = l.data['text'];
           String comments = l.data['comments'];
+          String tag = l.data['tag'];
           String id = l.documentID;
           place = l.data['adjusted_score'].toString();
           listingQ.add(new StakListing(
-              link, author, text, name, comments, title, source, "", id));
+              link, author, text, tag, comments, title, source, "", id));
         }
         return true;
       }
@@ -256,9 +265,12 @@ class ListingList {
   Listing getListing() {
     bool isEmpty;
     if(introCardIndex<3){//used to add introcards if needed
-      return introCards()[introCardIndex];
+      List<Listing> intro = introCards();
       introCardIndex++;
+      return intro[introCardIndex];
     }
+    if(introCardIndex == 3)
+      tagList.removeTag(new SourceName("Intro", "reddit"));
     do {
       isEmpty = true;
       SourceName newTag = tagList.getTag();//get the tag
@@ -404,5 +416,6 @@ class ListingList {
     introList.add(new Listing("", "Michael", "StakSwipe is a media aggregation app to view all of you favorite content. Using the app is simple jusr right swipe stuff that you like or want to see more of and left swipe stuff hat you want to see less, try it out swipe away this card", "Intro", "", "Welcome to Stakswipe", "reddit", ""));
     introList.add(new Listing("", "Michael", "Currently stakswipe takes from two sources reddit and its own server. If you want to Post to the stakswipe server press the button in the top right. You can also add or remove tags from your interests with the other two buttons to the left of the post button. In order to post You'll need a name swipe to see how to set that up", "Intro", "", "Other Features", "reddit", ""));
     introList.add(new Listing("", "Michael", "In the upper left is a button to open up the sidebar. In there you can navigate to your posts, your list which contains all your interests as well as their percentages and you can create a name. Names are completely optionial in stakswipe, you only need one if you want to post content. Creating a name in stakswipe is easy, just pick a name and hit enter if its available you can hit submit. No password is required and the name is tied to your device so no one else can impersonate you. Now your ready to start swipe on this to start going through content.", "Intro","", "The sidebar", "reddit", ""));
+    return introList;
   }
 }
