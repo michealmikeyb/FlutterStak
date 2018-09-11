@@ -82,10 +82,10 @@ class _CardStackState extends State<CardStack>{
           await removeCard();
           switch (direction) {
             case DismissDirection.startToEnd:
-            list.like(tag: new SourceName(newListing.tag, newListing.source),id: newListing.id);
+            await list.like(tag: new SourceName(newListing.tag, newListing.source),id: newListing.id);
             break;
             case DismissDirection.endToStart:
-            list.dislike(tag: new SourceName(newListing.tag, newListing.source), id: newListing.id);
+            await list.dislike(tag: new SourceName(newListing.tag, newListing.source), id: newListing.id);
             break;
             default:
             break;

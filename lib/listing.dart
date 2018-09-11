@@ -267,7 +267,7 @@ class ListingList {
     if(introCardIndex<3){//used to add introcards if needed
       List<Listing> intro = introCards();
       introCardIndex++;
-      return intro[introCardIndex];
+      return intro[introCardIndex-1];
     }
     if(introCardIndex == 3)
       tagList.removeTag(new SourceName("Intro", "reddit"));
@@ -310,17 +310,26 @@ class ListingList {
    * [tag] the tag to be liked
    * [id] the id of the listing that was liked
    */
-  void like({SourceName tag, String id}) {
+  Future<bool> like({SourceName tag, String id}) async{
     tagList.like(tag.name, tag.source);//like the listing in the taglist
-    if (tag.source == "stakuser" || tag.source == "stakswipe")//if it is from stakswipe update its score and adjusted score
-      Firestore.instance.runTransaction((transaction) async{
+    if (tag.source == "stakuser" || tag.source == "stakswipe"){//if it is from stakswipe update its score and adjusted score
+      /**await Firestore.instance.runTransaction((transaction) async{
         var freshSnap = await transaction.get(Firestore.instance.collection('listings').document(id));
         await transaction.update(freshSnap.reference, {
          'score': freshSnap.data['score']++,
          'adjusted_score': adjuster(freshSnap.data['score'], freshSnap.data['date_posted'])
         });
-      });
+      }).whenComplete((){});**/
+      var data = await Firestore.instance.collection("listings").document(id).get();
+      int score =data["score"];
+      DateTime posted = data["date_posted"];
+      int newscore = score+1;
+      double newAdjusted = adjuster(newscore, posted);
+      await Firestore.instance.collection("listings").document(id).updateData({'score': newscore, 'adjusted_score': newAdjusted});
+
+    }
     save();
+    return true;
   }
 
 
@@ -330,17 +339,25 @@ class ListingList {
    *  [tag] the tag to be disliked
    * [id] the id of the listing that was disliked
    */
-  void dislike({SourceName tag, String id}) {
+  Future<bool> dislike({SourceName tag, String id})async {
     tagList.dislike(tag.name, tag.source);//dislike the listing in the taglist
-    if (tag.source == "stakuser" || tag.source == "stakswipe")//if its from stakswipe update the scores and adjusted scores
-      Firestore.instance.runTransaction((transaction) async{
+    if (tag.source == "stakuser" || tag.source == "stakswipe"){//if its from stakswipe update the scores and adjusted scores
+     /**await Firestore.instance.runTransaction((transaction) async{
         var freshSnap = await transaction.get(Firestore.instance.collection('listings').document(id));
         await transaction.update(freshSnap.reference, {
          'score': freshSnap.data['score']--,
          'adjusted_score': adjuster(freshSnap.data['score'], freshSnap.data['date_posted'])
         });
-      });
+      }).whenComplete((){});**/
+    var data = await Firestore.instance.collection("listings").document(id).get();
+      int score =data["score"];
+      DateTime posted = data["date_posted"];
+      int newscore = score--;
+      int newAdjusted = adjuster(newscore, posted);
+      await Firestore.instance.collection("listings").document(id).updateData({'score': newscore, 'adjusted_score': newAdjusted});
+  }
     save();
+    return true;
   }
 
   /**
@@ -413,7 +430,7 @@ class ListingList {
    */
   List<Listing> introCards(){
     List<Listing> introList = new List();
-    introList.add(new Listing("", "Michael", "StakSwipe is a media aggregation app to view all of you favorite content. Using the app is simple jusr right swipe stuff that you like or want to see more of and left swipe stuff hat you want to see less, try it out swipe away this card", "Intro", "", "Welcome to Stakswipe", "reddit", ""));
+    introList.add(new Listing("", "Michael", "StakSwipe is a media aggregation app to view all of you favorite content. Using the app is simple just right swipe stuff that you like or that you want to see more of and left swipe stuff that you want to see less, try it out swipe away this card", "Intro", "", "Welcome to Stakswipe", "reddit", ""));
     introList.add(new Listing("", "Michael", "Currently stakswipe takes from two sources reddit and its own server. If you want to Post to the stakswipe server press the button in the top right. You can also add or remove tags from your interests with the other two buttons to the left of the post button. In order to post You'll need a name swipe to see how to set that up", "Intro", "", "Other Features", "reddit", ""));
     introList.add(new Listing("", "Michael", "In the upper left is a button to open up the sidebar. In there you can navigate to your posts, your list which contains all your interests as well as their percentages and you can create a name. Names are completely optionial in stakswipe, you only need one if you want to post content. Creating a name in stakswipe is easy, just pick a name and hit enter if its available you can hit submit. No password is required and the name is tied to your device so no one else can impersonate you. Now your ready to start swipe on this to start going through content.", "Intro","", "The sidebar", "reddit", ""));
     return introList;

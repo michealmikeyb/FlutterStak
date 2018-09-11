@@ -110,7 +110,6 @@ class _MyHomePageState extends State<MyHomePage> {
     while (i < userNames.length) {
       if (await login(userNames[i].name, userNames[i].id)) {
         currentUser = names[i]; //set the current user
-        break;
       } else
         i++;
     }
@@ -259,26 +258,7 @@ class _MyHomePageState extends State<MyHomePage> {
     });
   }
 
-  /**void share() async {
-    Firestore.instance.runTransaction((transaction) async {
-     await transaction
-         .set(Firestore.instance.collection("listings").document(), {
-       'title': stack.topListing.title,
-       'text': stack.topListing.text,
-       'link': stack.topListing.imgLink,
-       'tag': stack.topListing.tag,
-       'score': 0,
-       'comments': stack.topListing.commentLink,
-       'author': stack.topListing..author,
-       'adjusted_score': 1,
-       "shared_by": currentUser,
-     });
-   });
-    /**String shareUrl =
-        "http://$stakServerUrl/stakSwipe/share.php?tag=${stack.topListing.tag}&name=$currentUser&title= ${stack.topListing.title}&author=${stack.topListing.author}&link=${stack.topListing.imgLink}&comentLink=${stack.topListing.commentLink}&selfText=${stack.topListing.text}";
-    var response = await http.get(Uri.encodeFull(shareUrl));
-    print(" url: $shareUrl response: ${response.body}");**/
-}**/
+ 
   @override
   Widget build(BuildContext context) {
     return new Scaffold(

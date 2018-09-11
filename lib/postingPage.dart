@@ -6,7 +6,7 @@ import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'name.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:image_picker/image_picker.dart';
+//import 'package:image_picker/image_picker.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 
@@ -49,13 +49,13 @@ class _PostingPageState extends State<PostingPage> {
 
   }
 
-  Future<String> _pickSaveImage(String imageId) async {
+  /**Future<String> _pickSaveImage(String imageId) async {
     File imageFile = await ImagePicker.pickImage(source: ImageSource.gallery);
     StorageReference ref =
     FirebaseStorage.instance.ref().child("images").child("$title.jpg");
     StorageUploadTask uploadTask = ref.putFile(imageFile);
   return (await uploadTask.future).downloadUrl.toString();
-}
+}**/
 
   Widget build(BuildContext context) {
     return new Scaffold(
@@ -74,14 +74,14 @@ class _PostingPageState extends State<PostingPage> {
               });
             },
           ),
-          Row(children:<Widget>[ 
+          /**Row(children:<Widget>[ 
             RaisedButton(
               child: Text("Pick a picture from your phone"),
               onPressed: ()async{
                 link = await _pickSaveImage("newImage");
                 setState(() { });
                 sampleImg = link;
-              },),]),
+              },),])**/
           new TextField(
             decoration: InputDecoration(
               labelText: "Image Link"

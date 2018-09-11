@@ -422,6 +422,13 @@ class TagList {
     for (SourceName s in list) {
       if (s.name == name && s.source == source) percent += 0.01;
     }
+    for(Tag t in allTags){
+      if(t.name == name && t.type == source){
+
+      t.rating = (percent*100).round();
+      break;
+      }
+    }
     return percent;
   }
   /**
