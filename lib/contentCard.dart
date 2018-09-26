@@ -1,3 +1,8 @@
+/**
+ * this contains the widgets CardStack and ContentCard
+ * the content card diplays a listing as a content card with formatting
+ * the cardstack is a stack of dismissible ContentCard that handles the dismissle and rating adjustment for a listingQueue
+ */
 import 'package:flutter/material.dart';
 import 'listing.dart';
 import 'comments.dart';
@@ -6,8 +11,12 @@ import 'dart:convert';
 import 'dart:collection';
 import 'tag.dart';
 
+/**
+ * the Content card takes a listing and 
+ * displays it as a formatted card
+ */
 class ContentCard extends StatelessWidget{
-  Listing listing;
+  Listing listing;//the listing to be displayed
   ContentCard({Key key, this.listing}):super(key: key);
 
   Widget build(BuildContext context){
@@ -28,7 +37,7 @@ class ContentCard extends StatelessWidget{
                     ),
                     new Image.network(listing.imgLink), //the corresponding picture
                     new Text("${listing.text} \nComments:"),
-                    new Comment(
+                    new Comment(//parses the json from the comment link and turns it into a widget
                       url: "https://www.reddit.com${listing.commentLink}.json",
                     )
                   ],
@@ -38,47 +47,58 @@ class ContentCard extends StatelessWidget{
 
 }
 
+/**
+ * a stack of cards in that handles the dissmissle of the card widget
+ * and the following rating adjustment for the listinglist
+ */
 class CardStack extends StatefulWidget{
   CardStack({Key key, this.list }):super(key: key);
-  ListingList list;
+  ListingList list;//the listingList that will hold listing data
   Listing topListing;
   _CardStackState createState() => _CardStackState();
 }
 
 class _CardStackState extends State<CardStack>{
-  Queue<Widget> cardQ;
-  Queue<Listing> listingQ;
-  ListingList list;
+  Queue<Widget> cardQ;//the queue of cards to that will be converted into a stack of contentcards
+  Queue<Listing> listingQ;//used to keep track of the listing at the top of the stack
+  ListingList list;//the listingList that will hold listing data
   int stackSize;
   int index;
 
   void initState() {
-    cardQ = new Queue();
+    cardQ = new Queue();//initialize the queues
     listingQ = new Queue();
-    list = widget.list;
-    stackSize = 3;
+    list = widget.list;//bring the listinglist over from the widget parameters
+    stackSize = 3;//number of cards in the stack
     index = 0;
     
-    fillQ();
+    fillQ();//fill the cardQ and listingQ
   }
 
+  /**
+   * removes the topcard in the stack and adds a new card to
+   * the stack
+   */
   Future<bool> removeCard() async{
-    listingQ.removeLast();
-    cardQ.removeLast();
-    await fillQ();
+    listingQ.removeLast();//remove the top listing
+    cardQ.removeLast();//remove the top card
+    await fillQ();//fill the queues
     setState(() {});
-    widget.topListing = listingQ.last;
+    widget.topListing = listingQ.last;//reset the current toplisting
     return true;
   }
 
+  /**
+   * fills the listingq and cardq with listings gotten from the list
+   */
   Future<bool> fillQ() async{
-    await list.update();
-    while(cardQ.length<=stackSize){
-      Listing newListing = list.getListing();
+    await list.update();//update the listinglist so it can fill the listingqueues in the listinglist
+    while(cardQ.length<=stackSize){//get it back up to the proper size
+      Listing newListing = list.getListing();//get a listing from the list and add it to the listingq
       listingQ.addFirst(newListing);
-      cardQ.addFirst(new Dismissible(
+      cardQ.addFirst(new Dismissible(//create a new dismissible that holds the contentcard made from the newlisting
         key: new Key("$index"),
-        onDismissed:(direction)async{
+        onDismissed:(direction)async{//assign the logic to left and right swipes
           await removeCard();
           switch (direction) {
             case DismissDirection.startToEnd:
@@ -104,8 +124,8 @@ class _CardStackState extends State<CardStack>{
 
  
   Widget build(BuildContext context){
-    List<Widget> cardList = cardQ.toList(); 
-    if(cardQ == null || cardQ.isEmpty)
+    List<Widget> cardList = cardQ.toList();//make the cardq into a list that can be put in a stack widget
+    if(cardQ == null || cardQ.isEmpty)//while its loading show stakswipe logo
       return new ContentCard(listing: new Listing("https://i.imgur.com/yFW1GdD.png", "", "welcome to StakSwipe", "", "", "Loading", "", ""));
     return new Stack(children: cardList);
   }

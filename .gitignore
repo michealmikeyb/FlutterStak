@@ -7,3 +7,6 @@
 build/
 
 .flutter-plugins
+android/app/build.gradle
+.vscode/settings.json
+lib/dialogs.dart

@@ -224,7 +224,7 @@ class _AccountDialogState extends State<AccountDialog>{
    * both the database and the username list
    * @param the name that is attempting to be added
    */
-  void addName(String name) async {
+  Future<bool> addName(String name) async {
     checked = await checkName(name); //check the name
     if (await checkName(name)) {
       UserName newUser = new UserName(name.toLowerCase()); //create a new username
@@ -239,6 +239,7 @@ class _AccountDialogState extends State<AccountDialog>{
           await SharedPreferences.getInstance(); //get the shared preferences
       String userNamesJson = encoder.convert(userNames);
       prefs.setString('names', userNamesJson); //save the usernames
+      return true;
     }
   }
   Widget build (BuildContext context){
@@ -249,9 +250,13 @@ class _AccountDialogState extends State<AccountDialog>{
             Text("Desired Name (press enter to check availability)"),
             TextField(
               onSubmitted: (text) {
-                setState(() {
-                  addName(
-                      text.toLowerCase()); //check the name to see if it is available, add it if it is
+                setState(()async {
+                  await addName(
+                     text.toLowerCase()); //check the name to see if it is available, add it if it is
+                  if(checked)
+                    buttonText = "Submit";
+                  else
+                      buttonText = "Name Taken";
                 });
               },
             ),
