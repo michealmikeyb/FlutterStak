@@ -23,6 +23,7 @@ import 'userShares.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'listing.dart';
 import 'contentCard.dart';
+import 'shareListPage.dart';
 
 void main() => runApp(new MyApp());
 
@@ -173,8 +174,8 @@ class _MyHomePageState extends State<MyHomePage> {
             TextField(
               onSubmitted: (text) {
                 setState(() {
-                  addName(
-                      text.toLowerCase()); //check the name to see if it is available, add it if it is
+                  addName(text
+                      .toLowerCase()); //check the name to see if it is available, add it if it is
                 });
               },
             ),
@@ -224,12 +225,12 @@ class _MyHomePageState extends State<MyHomePage> {
   void addName(String name) async {
     checked = await checkName(name); //check the name
     if (checked) {
-      UserName newUser = new UserName(name.toLowerCase()); //create a new username
+      UserName newUser =
+          new UserName(name.toLowerCase()); //create a new username
       names.add(name.toLowerCase()); //add it to the string list of names
       userNames.add(newUser); //add it to the username list
       Firestore.instance.runTransaction((transaction) async {
-        await transaction.set(
-            Firestore.instance.collection("users").document(),
+        await transaction.set(Firestore.instance.collection("users").document(),
             {"name": name.toLowerCase(), "number": newUser.id});
       });
       currentUser = name; //set the current user to the one that was just added
@@ -253,12 +254,11 @@ class _MyHomePageState extends State<MyHomePage> {
         'author': stack.topListing.author,
         'adjusted_score': 1,
         "shared_by": currentUser,
-       'date_posted': DateTime.now(),
+        'date_posted': DateTime.now(),
       });
     });
   }
 
- 
   @override
   Widget build(BuildContext context) {
     return new Scaffold(
@@ -342,6 +342,18 @@ class _MyHomePageState extends State<MyHomePage> {
                             TagPage(list: stack.list.tagList)));
               },
             ),
+            new ListTile(
+              title: Text("Share List"),
+              trailing: Icon(Icons.file_upload),
+              onTap: () {
+                Navigator.pop(context);
+                Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                        builder: (context) => ShareListPage(
+                            list: stack.list.tagList, userName: currentUser)));
+              },
+            ),
             new Divider(),
             new ListTile(
               title: Text("Close"),
@@ -353,9 +365,13 @@ class _MyHomePageState extends State<MyHomePage> {
             new ListTile(
               title: Text("New Name"),
               trailing: Icon(Icons.add),
-              onTap: () async{
-                userNames = await showDialog(context: context, child: new AccountDialog(userNames: userNames,));
-                currentUser = userNames[userNames.length-1].name;
+              onTap: () async {
+                userNames = await showDialog(
+                    context: context,
+                    child: new AccountDialog(
+                      userNames: userNames,
+                    ));
+                currentUser = userNames[userNames.length - 1].name;
               },
             ),
           ],
