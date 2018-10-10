@@ -61,8 +61,7 @@ class _CommentState extends State<Comment> {
       return FutureBuilder(
           future: fromUrl(),
           builder: (BuildContext context, AsyncSnapshot snapshot) {
-            if(!snapshot.hasData)
-            return Text("Loading Comments...");
+            if (!snapshot.hasData) return Text("Loading Comments...");
             var list = snapshot.data; //get the list from the fromUrl method
             List<Widget> widgetList =
                 getComments(list, 0); //make a list of comments from it
@@ -73,18 +72,19 @@ class _CommentState extends State<Comment> {
           });
     } else {
       //else it is a non root node
-      
+
       if (widget.map["data"]["replies"] != "") {
         //if it has replies append them to the end of the column
         return Column(
           children: <Widget>[
                 ListTile(
-                  contentPadding: EdgeInsets.only(left: 20.0*widget.indent),
+                  contentPadding: EdgeInsets.only(left: 20.0 * widget.indent),
                   title: Text(
                     (widget.map["data"]["body"]),
                     textAlign: TextAlign.left,
                   ),
-                  subtitle: Text("Written by: ${widget.map["data"]["author"]} Score: ${widget.map["data"]["score"]}"),
+                  subtitle: Text(
+                      "Written by: ${widget.map["data"]["author"]} Score: ${widget.map["data"]["score"]}"),
                 ),
               ] +
               getComments(
@@ -92,11 +92,12 @@ class _CommentState extends State<Comment> {
                   widget.map["data"]["replies"]["data"]["children"],
                   widget.indent + 1),
         );
-      } else {//if it doesn't have any replies just return one of the list tiles
+      } else {
+        //if it doesn't have any replies just return one of the list tiles
         return ListTile(
-          contentPadding: EdgeInsets.only(left: 20.0*widget.indent),
+          contentPadding: EdgeInsets.only(left: 20.0 * widget.indent),
           title: Text(
-            (widget.map["data"]["body"]),
+            (widget.map["data"]["body"].replaceAll("&amp;", "&")),
             textAlign: TextAlign.left,
           ),
           subtitle: Text("written by: ${widget.map["data"]["author"]}"),

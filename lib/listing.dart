@@ -217,6 +217,9 @@ class ListingQueue {
         }
         return true;
       }
+      else if(source == "twitter"){
+        
+      }
     }
   }
 
