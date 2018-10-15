@@ -343,7 +343,7 @@ class _MyHomePageState extends State<MyHomePage> {
               },
             ),
             new ListTile(
-              title: Text("Share List"),
+              title: Text("Share Stak"),
               trailing: Icon(Icons.file_upload),
               onTap: () {
                 Navigator.pop(context);

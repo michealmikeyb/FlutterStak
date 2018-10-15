@@ -23,6 +23,9 @@ class ContentCard extends StatelessWidget{
     return Card(
                 //the card
                 elevation: 50.0,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10.0)
+                ),
                 child: new ListView(
                   children: <Widget>[
                     new Text(
